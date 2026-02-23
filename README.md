@@ -1,2 +1,3 @@
-# L-sningPRO
+# LosningPRO
 Multi-Tenant SaaS Marketplace Platform for homeservice professional workers as: electricians, plumbers, carpenters, murmesters,...
+trigger deploy
