@@ -16,6 +16,7 @@ import Kontakt from './src/pages/Kontakt';
 import Cart from './src/pages/Cart';
 import Checkout from './src/pages/Checkout';
 import NotFound from './src/pages/NotFound';
+import Login from './src/pages/login';
 
 const App: React.FC = () => {
   return (
