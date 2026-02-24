@@ -31,9 +31,9 @@ const Header = () => {
             {/* Logo icon */}
             <Link to="/" className="flex items-center space-x-2">
               <img
-                src="https://assets.meku.dev/attachments/7c302cd1-7952-4482-a7fb-955e01b4ea57/1771447765691.png"
+                src="/logo.png"
                 alt="LøsningPRO mascot logo"
-                className="h-12 w-12 object-contain"
+                className="h-16 w-16 object-contain"
               />
               <span className="text-2xl font-bold leading-none">
                 <span className="text-black">Løsning</span><span className="text-orange-500">PRO</span>
