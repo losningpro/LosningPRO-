@@ -17,7 +17,7 @@ const ProductSlider: React.FC<ProductSliderProps> = ({
       </div>
 
       <div className="relative">
-        <div className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2">
+        <div className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 no-scrollbar">
 
           {products.map((product) => (
             <div
