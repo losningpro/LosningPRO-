@@ -1,56 +1,48 @@
-const ProductSlider: React.FC<ProductSliderProps> = ({
-  title,
-  products,
-  viewAllLink
-}) => {
-  return (
-    <div className="py-10">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">{title}</h2>
-        <Link
-          to={viewAllLink}
-          className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
-        >
-          Se alle
-          <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
-      </div>
+return (
+  <div className="py-10">
+    <div className="flex items-center justify-between mb-8">
+      <h2 className="text-3xl font-bold text-gray-900">{title}</h2>
+      <Link
+        to={viewAllLink}
+        className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+      >
+        Se alle
+        <ArrowRight className="ml-1 h-4 w-4" />
+      </Link>
+    </div>
 
-      <div className="relative">
-        <div className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 no-scrollbar">
+    <div className="relative">
+      <div className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 no-scrollbar">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="snap-start shrink-0 w-[260px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+          >
+            <div className="aspect-square overflow-hidden">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+            </div>
 
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="snap-start shrink-0 w-[260px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-            >
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
-                />
-              </div>
-
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {product.name}
-                </h3>
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-primary">
-                    {product.price} kr
-                  </span>
-                  <button className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    <ShoppingCart className="h-4 w-4" />
-                  </button>
-                </div>
+            <div className="p-4">
+              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                {product.name}
+              </h3>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-bold text-primary">
+                  {product.price} kr
+                </span>
+                <button className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                  <ShoppingCart className="h-4 w-4" />
+                </button>
               </div>
             </div>
-          ))}
-
-        </div>
+          </div>
+        ))}
       </div>
     </div>
-  );
-};
+  </div>
+);
