@@ -15,8 +15,8 @@ import Arbejdsgalleri from './src/pages/Arbejdsgalleri';
 import Kontakt from './src/pages/Kontakt';
 import Cart from './src/pages/Cart';
 import Checkout from './src/pages/Checkout';
-import NotFound from './src/pages/NotFound';
 import Login from './src/pages/login';
+import NotFound from './src/pages/NotFound';
 
 const App: React.FC = () => {
   return (
@@ -34,6 +34,7 @@ const App: React.FC = () => {
             <Route path="/kontakt" element={<Kontakt />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/log-pa" element={<Login />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <ToastContainer
