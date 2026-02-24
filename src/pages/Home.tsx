@@ -76,17 +76,17 @@ export default function Home() {
       <Header />
       <main>
         <HeroSection />
-        <ProductSlider 
-          title="Populære Materialer" 
-          products={materialProducts} 
-          viewAllLink="/kob" 
-        />
-        <ServiceGrid />
-        <ProductSlider 
-          title="Populære Tjenester" 
-          products={serviceProducts} 
-          viewAllLink="/tjenester" 
-        />
+         <ProductSlider
+      title="Populære Materialer"
+      products={materialProducts}
+      viewAllLink="/kob"
+    />
+
+    <ProductSlider
+      title="Populære Tjenester"
+      products={serviceProducts}
+      viewAllLink="/tjenester"
+    />
         <HowItWorks />
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
