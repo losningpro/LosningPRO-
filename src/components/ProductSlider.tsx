@@ -1,77 +1,61 @@
-import React from "react";
-import { ShoppingCart, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import React from 'react';
 
-interface Product {
+type Product = {
   id: string;
   name: string;
   price: number;
   image: string;
   category: string;
-}
+};
 
-interface ProductSliderProps {
+export default function ProductSlider({
+  title,
+  products,
+  viewAllLink,
+  onInteract
+}: {
   title: string;
   products: Product[];
   viewAllLink: string;
-  onViewAllClick?: () => void;
-}
-
-const ProductSlider: React.FC<ProductSliderProps> = ({ title, products, viewAllLink }) => {
+  onInteract?: () => void;
+}) {
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">{title}</h2>
-          <Link
-            to={viewAllLink}
-            className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
-          >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{title}</h3>
+          <a href={viewAllLink} className="text-sm font-semibold text-blue-700 hover:underline">
             Se alle
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Link>
+          </a>
         </div>
 
-        {/* Slider horizontal */}
-        <div className="relative">
-          <div className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 no-scrollbar">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="snap-start shrink-0 w-[260px] sm:w-[280px] lg:w-[300px] bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-              >
-                <div className="aspect-square overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                </div>
-
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-primary">{product.price} kr</span>
-                    <button
-                      type="button"
-                      className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                      aria-label="Add to cart"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+        <div
+          className="flex gap-4 overflow-x-auto pb-2"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onClick={onInteract}
+          onTouchStart={onInteract}
+        >
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="min-w-[240px] max-w-[240px] rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition"
+            >
+              <div className="h-40 bg-gray-100">
+                <img src={p.image} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="p-4">
+                <div className="text-xs text-gray-500">{p.category}</div>
+                <div className="font-semibold text-gray-900 mt-1">{p.name}</div>
+                <div className="text-gray-700 mt-2">{p.price} kr</div>
 
+                <button className="mt-3 w-full rounded-xl bg-orange-500 text-white py-2 font-semibold hover:bg-blue-700 transition">
+                  Se detaljer
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
-};
-
-export default ProductSlider;
+}
