@@ -5,8 +5,6 @@ export default function BlueFeatureBar() {
     { title: 'Fuld forsikret', subtitle: 'Komplet dækning for din tryghed' },
     { title: '2 års garanti på arbejde', subtitle: 'Kvalitet garanteret på vores arbejde' },
     { title: 'Professionelle til hver opgave', subtitle: 'Mere end 10 års erfaring' }
-         
-Mere end 10 års erfaring
   ];
 
   return (
