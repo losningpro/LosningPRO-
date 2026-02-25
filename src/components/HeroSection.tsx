@@ -1,80 +1,62 @@
-import React from "react";
-import { ArrowRight, CheckCircle, Shield, Award, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
 
-const HeroSection = () => {
+export default function HeroSection({ onPrimaryClick }: { onPrimaryClick?: () => void }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
-    <section
-      className="relative overflow-hidden"
-      style={{
-        backgroundImage: "url('/portada.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      {/* overlay para que el texto se lea bien */}
-      <div className="absolute inset-0 bg-white/70" />
+    <section className="relative overflow-hidden bg-white">
+      {/* Fondo (puedes cambiar la imagen si quieres) */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=2200&q=80')] bg-cover bg-center opacity-25" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/60 to-white" />
+      </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-24">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-4 text-gray-900">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16">
+        <div className={`max-w-3xl ${mounted ? 'animate-slideUp' : 'opacity-0'}`}>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
             Professionelle løsninger
-            <span className="block text-blue-600 mt-1">Du kan stole på</span>
+            <br />
+            Du kan stole på
           </h1>
 
-          <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-            Fra el-arbejde til møbelsamling håndterer vi alle dine
-            boligforbedringsbehov med ekspertise og omhu. Hurtigt og pålideligt.
+          <p className="mt-5 text-lg sm:text-xl text-gray-700">
+            Fra el-arbejde til møbelsamling håndterer vi alle dine boligforbedringsbehov med ekspertise og omhu. Hurtigt
+            og pålideligt.
           </p>
 
-          {/* CTAs centrados */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-            <Link
-              to="/tjenester"
-              className="inline-flex items-center justify-center px-8 py-4 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors shadow-md"
-            >
-              Se alle tjenester
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-            <Link
-              to="/kontakt"
-              className="inline-flex items-center justify-center px-8 py-4 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
-            >
-              Få et tilbud
-            </Link>
+          <div className="mt-6 space-y-2 text-gray-800">
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-500">✅</span>
+              <span>Professionelle til hver opgave</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-500">✅</span>
+              <span>Mere end 10 års erfaring</span>
+            </div>
           </div>
 
-          {/* badges centrados */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-6">
-            <div className="flex flex-col items-center text-center space-y-1">
-              <CheckCircle className="h-6 w-6 text-blue-600" />
-              <span className="text-xs font-medium text-gray-800 leading-tight">
-                Professionelle til hver opgave
-              </span>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-1">
-              <Clock className="h-6 w-6 text-blue-600" />
-              <span className="text-xs font-medium text-gray-800 leading-tight">
-                Mere end 10 års erfaring
-              </span>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-1">
-              <Shield className="h-6 w-6 text-blue-600" />
-              <span className="text-xs font-medium text-gray-800 leading-tight">
-                Fuldt forsikret
-              </span>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-1">
-              <Award className="h-6 w-6 text-blue-600" />
-              <span className="text-xs font-medium text-gray-800 leading-tight">
-                2 års garanti på arbejde
-              </span>
-            </div>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onPrimaryClick}
+              className="rounded-xl px-6 py-3 font-semibold bg-orange-500 text-white hover:bg-blue-700 transition"
+            >
+              BOOK EN TJENESTE →
+            </button>
+
+            <a
+              href="/tjenester"
+              className="rounded-xl px-6 py-3 font-semibold bg-gray-200 text-gray-900 hover:bg-blue-700 hover:text-white transition text-center"
+            >
+              SE ALLE TJENESTER
+            </a>
           </div>
         </div>
       </div>
     </section>
   );
-};
-
-export default HeroSection;
+}
