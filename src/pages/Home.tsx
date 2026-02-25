@@ -135,7 +135,68 @@ const serviceProducts = [
   }
 ];
 
+const JURIDISK_INFO_URL = 'https://info.losningpro.dk';
+
+function CollapsibleBanner({
+  isOpen,
+  innerRef,
+  children,
+}: {
+  isOpen: boolean;
+  innerRef?: React.RefObject<HTMLDivElement>;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      aria-hidden={!isOpen}
+      className={[
+        "bg-yellow-50 border-y border-yellow-200 overflow-hidden transition-all duration-300",
+        isOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+      ].join(' ')}
+    >
+      <div ref={innerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        {children}
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
+  const [showMaterialBanner, setShowMaterialBanner] = useState(false);
+  const [showServiceBanner, setShowServiceBanner] = useState(false);
+
+  const materialBannerRef = useRef<HTMLDivElement>(null);
+  const serviceBannerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll suave al abrir
+  useEffect(() => {
+    if (showMaterialBanner) {
+      setTimeout(() => {
+        materialBannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }, [showMaterialBanner]);
+
+  useEffect(() => {
+    if (showServiceBanner) {
+      setTimeout(() => {
+        serviceBannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  }, [showServiceBanner]);
+
+  const handleMaterialsClick = () => {
+    setShowMaterialBanner((v) => !v);
+    // opcional: si abres materiales, cerrar servicios
+    // setShowServiceBanner(false);
+  };
+
+  const handleServicesClick = () => {
+    setShowServiceBanner((v) => !v);
+    // opcional: si abres servicios, cerrar materiales
+    // setShowMaterialBanner(false);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* SEO schema */}
@@ -145,17 +206,78 @@ export default function Home() {
       <main>
         <HeroSection />
 
-        <ProductSlider
-          title="Populære Materialer"
-          products={materialProducts}
-          viewAllLink="/kob"
-        />
+        {/* Carrusel Materiales (clicable) */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleMaterialsClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleMaterialsClick();
+          }}
+          className="cursor-pointer"
+          aria-label="Åbn information om fragt og levering for materialer"
+        >
+          <ProductSlider
+            title="Populære Materialer"
+            products={materialProducts}
+            viewAllLink="/kob"
+          />
+        </div>
 
-        <ProductSlider
-          title="Populære Tjenester"
-          products={serviceProducts}
-          viewAllLink="/tjenester"
-        />
+        {/* Banner materiales: oculto por defecto, aparece al clicar el carrusel */}
+        <CollapsibleBanner isOpen={showMaterialBanner} innerRef={materialBannerRef}>
+          <p className="text-sm sm:text-base text-yellow-900 leading-relaxed">
+            <span className="font-semibold">⚠️</span>{' '}
+            Transport pris af varer er includeret i prissen på dette shop i hele Danmark.
+            Dette er en automatiseret butik – vi har ikke eget lager. Vi behandler din ordre
+            inden for maks. 24 timer, og vores leverandør sender varen direkte til dig inden
+            for højst to uger. De angivne leveringstider er estimater fra distributøren og kan variere.
+          </p>
+        </CollapsibleBanner>
+
+        {/* Carrusel Servicios (clicable) */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={handleServicesClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleServicesClick();
+          }}
+          className="cursor-pointer"
+          aria-label="Åbn information om opstartsgebyr og vilkår for tjenester"
+        >
+          <ProductSlider
+            title="Populære Tjenester"
+            products={serviceProducts}
+            viewAllLink="/tjenester"
+          />
+        </div>
+
+        {/* Banner servicios: oculto por defecto, aparece al clicar el carrusel */}
+        <CollapsibleBanner isOpen={showServiceBanner} innerRef={serviceBannerRef}>
+          <p className="text-sm sm:text-base text-yellow-900 leading-relaxed">
+            <span className="font-semibold">⚠️</span>
+            Der er et opstartsgebyr på 399 kr. til dækning af transport og den tid, vi bruger på at organisere din booking.
+            Når du booker, betaler du kun dette opstartsgebyr (kan ikke refunderes). Resten af regningen betales under besøget,
+            hvilket afspejler virkeligheden. Hvis du afbestiller en dag før servicen starter, får du refunderet for den resterende time.
+            Se resten af opstartgebyr vilkår{' '}
+            <a
+              href={JURIDISK_INFO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold hover:opacity-80"
+              onClick={(e) => e.stopPropagation()} // para que el click no colapse el banner
+            >
+              her
+            </a>
+            .
+          </p>
+
+          <p className="mt-3 text-sm sm:text-base text-yellow-900 leading-relaxed">
+            Kunden sørger for de materialer og genstande, der skal installeres. Ellers medbringer vi de materialer og genstande,
+            der skal installeres, i henhold til kundens ønsker.
+          </p>
+        </CollapsibleBanner>
 
         <HowItWorks />
 
