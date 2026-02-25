@@ -14,6 +14,7 @@ interface ProductSliderProps {
   title: string;
   products: Product[];
   viewAllLink: string;
+  onViewAllClick?: () => void;
 }
 
 const ProductSlider: React.FC<ProductSliderProps> = ({ title, products, viewAllLink }) => {
