@@ -86,7 +86,7 @@ const materialProducts = [
     price: 749,
     image: '/00011.jpg',
     category: 'Material'
-];
+},];
 
 const serviceProducts = [
   {
