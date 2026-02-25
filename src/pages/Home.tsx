@@ -10,6 +10,7 @@ import TrustpilotCard from '../components/TrustpilotCard';
 import ContactCards from '../components/ContactCards';
 import CookieBanner from '../components/CookieBanner';
 import AssistantWidget from '../components/AssistantWidget';
+import BlueFeatureBar from '../components/BlueFeatureBar';
 
 /**
  * SEO (JSON-LD) – LocalBusiness
@@ -136,6 +137,7 @@ export default function Home() {
 
       <main className="bg-white">
         <HeroSection onPrimaryClick={scrollToContact} />
+        <BlueFeatureBar />
 
         {/* Barra azul (como en lovable) */}
         <BlueFeatureBar />
