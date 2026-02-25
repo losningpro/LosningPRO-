@@ -7,92 +7,163 @@ import ServiceGrid from '../components/ServiceGrid';
 import HowItWorks from '../components/HowItWorks';
 import ContactForm from '../components/ContactForm';
 
+function SeoSchema() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "LøsningPRO",
+    "url": "https://losningpro.dk",
+    "telephone": "+45 52 71 78 10",
+    "address": {
+      "@type": "Baneleddet 39, 2600",
+      "addressLocality": "Glostrup",
+      "addressCountry": "DK"
+    },
+    "areaServed": [
+      "Glostrup",
+      "København",
+      "Albertslund",
+      "Brøndby",
+      "Ballerup",
+      "Brøndbyvester",
+      "Storkøbenhavn"
+    ],
+    "sameAs": [
+      "https://www.trustpilot.com/review/losningpro.dk",
+      "https://www.instagram.com/danieldanielsen.gi",
+      "https://www.facebook.com/share/1C7Sf2mnP5/"
+    ]
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 // Mock data for products
 const materialProducts = [
   {
     id: '1',
-    name: 'LED Pære E27 9W',
-    price: 89,
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+    name: 'LED Pære E27 10W varm lys',
+    price: 29,
+    image: '/00025.jpg',
     category: 'Material'
   },
   {
     id: '2',
-    name: 'Stikkontakt Hvid',
-    price: 45,
-    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+    name: 'Ophæng E27',
+    price: 149,
+    image: '/00021.jpg',
     category: 'Material'
   },
   {
     id: '3',
-    name: 'Afbryder 1-pol',
-    price: 35,
-    image: 'https://placehold.co/400x400',
+    name: 'Papirbole lampe',
+    price: 99,
+    image: '/00022.jpg',
     category: 'Material'
   },
   {
     id: '4',
-    name: 'Kabel 2.5mm²',
-    price: 12,
-    image: 'https://placehold.co/400x400',
+    name: 'Nordic panel loftlampe',
+    price: 699,
+    image: '/00018.jpg',
+    category: 'Material'
+ },
+ {
+    id: '5',
+    name: 'Nordic plafond loftlampe',
+    price: 649,
+    image: '/00013.jpg',
+    category: 'Material'
+  },
+  {
+    id: '6',
+    name: 'Industrielle sort lampe',
+    price: 749,
+    image: '/00011.jpg',
     category: 'Material'
   }
 ];
 
 const serviceProducts = [
   {
-    id: '5',
-    name: 'El-installation',
-    price: 850,
-    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+    id: '7',
+    name: 'Flytning af stikkontakt',
+    price: 1000,
+    image: '/enhufeflyt.png',
     category: 'El-Service'
   },
   {
-    id: '6',
+    id: '8',
     name: 'VVS Reparation',
-    price: 650,
-    image: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+    price: 1000,
+    image: '/leak.jpg',
     category: 'VVS-Service'
   },
   {
-    id: '7',
-    name: 'Tømrerarbejde',
-    price: 750,
-    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    category: 'Tømrer'
+    id: '9',
+    name: 'Lampeophæng med kabelskjuler/kabelkanal ( 1 lampe)',
+    price: 550,
+    image: '/AB25.jpg',
+    category: 'El-service'
   },
   {
-    id: '8',
-    name: 'Malerarbejde',
-    price: 450,
-    image: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    category: 'Maling'
+    id: '10',
+    name: 'Toiletter ude af drift',
+    price: 650,
+    image: '/00036.png',
+    category: 'VVS-Service'
+  },
+  {
+    id: '11',
+    name: 'Opvaskemaskin intallation',
+    price: 1000,
+    image: '/lavaplatos.png',
+    category: 'VVS-service'
+  },
+  {
+    id: '12',
+    name: 'Vask ude af drift',
+    price: 650,
+    image: '/00046.png',
+    category: 'VVS-Service'
   }
 ];
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
+      {/* SEO schema */}
+      <SeoSchema />
+
       <Header />
       <main>
         <HeroSection />
-         <ProductSlider
-      title="Populære Materialer"
-      products={materialProducts}
-      viewAllLink="/kob"
-    />
 
-    <ProductSlider
-      title="Populære Tjenester"
-      products={serviceProducts}
-      viewAllLink="/tjenester"
-    />
+        <ProductSlider
+          title="Populære Materialer"
+          products={materialProducts}
+          viewAllLink="/kob"
+        />
+
+        <ProductSlider
+          title="Populære Tjenester"
+          products={serviceProducts}
+          viewAllLink="/tjenester"
+        />
+
         <HowItWorks />
+
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Om LøsningPRO</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
-              Vi er din lokale partner for alle el- og VVS-opgaver i Glostrup og omegn. 
+              Vi er din lokale partner for alle el- og VVS-opgaver i Glostrup og omegn.
               Med over 10 års erfaring leverer vi kvalitetsarbejde til både private og erhvervskunder.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
@@ -111,6 +182,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-8">Arbejdsgalleri</h2>
@@ -121,8 +193,10 @@ export default function Home() {
             </div>
           </div>
         </section>
+
         <ContactForm />
       </main>
+
       <Footer />
     </div>
   );
