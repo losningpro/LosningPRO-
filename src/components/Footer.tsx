@@ -7,7 +7,7 @@ const TRUSTPILOT_INVITE_LINK = 'https://losningpro.dk+7abe809517@invite.trustpil
 
 const INSTAGRAM_URL = 'https://www.instagram.com/danieldanielsen.gi';
 const FACEBOOK_URL = 'https://www.facebook.com/share/1C7Sf2mnP5/';
-const LINKEDIN_URL = '#'; // si no lo tienes, déjalo así o bórralo
+const LINKEDIN_URL = 'https://www.linkedin.com/danielibvi';
 
 const JURIDISK_INFO_URL = 'https://info.losningpro.dk';
 
