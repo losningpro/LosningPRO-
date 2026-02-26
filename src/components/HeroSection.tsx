@@ -6,24 +6,29 @@ export default function HeroSection() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 40);
+    const t = setTimeout(() => setMounted(true), 30);
     return () => clearTimeout(t);
   }, []);
 
   return (
     <section className="relative w-full min-h-[640px] h-[80vh] flex items-center justify-center overflow-hidden">
-      {/* Fondo portada.png */}
+      {/* Background */}
       <div className="absolute inset-0">
-        <img src="/portada.png" alt="LøsningPRO" className="w-full h-full object-cover" />
-        {/* Overlay suave para legibilidad (similar a lovable) */}
-        <div className="absolute inset-0 bg-white/70" />
+        <img
+          src="/portada.png"
+          alt="LøsningPRO"
+          className="w-full h-full object-cover"
+        />
+        {/* Overlay similar a lovable: oscuro + gradiente suave */}
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
       </div>
 
-      {/* Contenido centrado */}
+      {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         <h1
           className={[
-            'font-extrabold leading-tight text-gray-900',
+            'font-extrabold leading-tight text-white',
             'text-4xl sm:text-5xl lg:text-6xl',
             mounted ? 'animate-slideUp1' : 'opacity-0',
           ].join(' ')}
@@ -33,7 +38,7 @@ export default function HeroSection() {
 
         <h2
           className={[
-            'font-extrabold leading-tight text-blue-700',
+            'font-extrabold leading-tight text-blue-300',
             'text-4xl sm:text-5xl lg:text-6xl mt-2',
             mounted ? 'animate-slideUp2' : 'opacity-0',
           ].join(' ')}
@@ -43,32 +48,32 @@ export default function HeroSection() {
 
         <p
           className={[
-            'mt-6 text-lg sm:text-xl text-gray-700 max-w-3xl mx-auto',
+            'mt-6 text-lg sm:text-xl text-white/90 max-w-3xl mx-auto',
             mounted ? 'animate-slideUp3' : 'opacity-0',
           ].join(' ')}
         >
-          Fra el-arbejde til møbelsamling håndterer vi alle dine boligforbedringsbehov med ekspertise og omhu.
-          Hurtigt og pålideligt.
+          Fra el-arbejde til møbelsamling håndterer vi alle dine boligforbedringsbehov
+          med ekspertise og omhu. Hurtigt og pålideligt.
         </p>
 
-        {/* 2 líneas con icono amarillo (como lovable) */}
+        {/* Bullets (icono amarillo) */}
         <div
           className={[
-            'mt-6 flex flex-col sm:flex-row justify-center gap-6 text-gray-800',
+            'mt-6 flex flex-col sm:flex-row justify-center gap-6 text-white',
             mounted ? 'animate-slideUp4' : 'opacity-0',
           ].join(' ')}
         >
           <div className="flex items-center justify-center gap-2">
-            <CheckCircle2 className="text-yellow-500" size={22} />
+            <CheckCircle2 className="text-yellow-400" size={22} />
             <span className="font-medium">Professionelle til hver opgave</span>
           </div>
           <div className="flex items-center justify-center gap-2">
-            <CheckCircle2 className="text-yellow-500" size={22} />
+            <CheckCircle2 className="text-yellow-400" size={22} />
             <span className="font-medium">Mere end 10 års erfaring</span>
           </div>
         </div>
 
-        {/* Botones centrados, grandes, hover a azul */}
+        {/* CTA buttons */}
         <div
           className={[
             'mt-8 flex flex-col sm:flex-row justify-center gap-4',
@@ -76,17 +81,17 @@ export default function HeroSection() {
           ].join(' ')}
         >
           <Link
-            to="/kontakt"
-            className="px-8 py-4 rounded-xl font-semibold text-lg bg-orange-500 text-white hover:bg-blue-700 transition-colors"
+            to="/tjenester"
+            className="px-9 py-4 rounded-xl font-semibold text-lg bg-orange-500 text-white hover:bg-blue-600 transition-colors shadow-lg"
           >
-            BOOK EN TJENESTE →
+            Se alle tjenester
           </Link>
 
           <Link
-            to="/tjenester"
-            className="px-8 py-4 rounded-xl font-semibold text-lg bg-gray-200 text-gray-900 hover:bg-blue-700 hover:text-white transition-colors"
+            to="/kontakt"
+            className="px-9 py-4 rounded-xl font-semibold text-lg bg-white/20 text-white border border-white/30 hover:bg-blue-600 hover:border-blue-600 transition-colors"
           >
-            SE ALLE TJENESTER
+            Få et tilbud
           </Link>
         </div>
       </div>
