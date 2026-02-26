@@ -164,9 +164,9 @@ export default function Home() {
 
       <main className="bg-white">
         <HeroSection onPrimaryClick={scrollToContact} />
+        
         <BlueFeatureBar />
 
-        {/* Marketplace header con buscador unificado */}
         <section className="bg-white pt-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
