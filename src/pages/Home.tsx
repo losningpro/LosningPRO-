@@ -10,7 +10,6 @@ import TrustpilotCard from '../components/TrustpilotCard';
 import ContactCards from '../components/ContactCards';
 import CookieBanner from '../components/CookieBanner';
 import AssistantWidget from '../components/AssistantWidget';
-import BlueFeatureBar from '../components/BlueFeatureBar';
 
 function SeoSchema() {
   const jsonLd = {
@@ -130,8 +129,7 @@ const serviceProducts = [
     price: 650,
     image: '/00046.png',
     category: 'VVS-Service'
-  }
-];
+  },];
 
 const JURIDISK_INFO_PATH = '/juridisk';
 
