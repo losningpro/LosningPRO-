@@ -166,9 +166,6 @@ export default function Home() {
         <HeroSection onPrimaryClick={scrollToContact} />
         <BlueFeatureBar />
 
-        {/* Barra azul (como en lovable) */}
-        <BlueFeatureBar />
-
         {/* Marketplace header con buscador unificado */}
         <section className="bg-white pt-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
