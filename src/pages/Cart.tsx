@@ -6,22 +6,7 @@ import { Link } from 'react-router-dom';
 
 export default function Cart() {
   // Mock cart data - in real app this would come from state management
-  const cartItems = [
-    {
-      id: '1',
-      name: 'LED Pære E27 9W Varm Hvid',
-      price: 89,
-      quantity: 2,
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
-    },
-    {
-      id: '2',
-      name: 'El-installation',
-      price: 850,
-      quantity: 1,
-      image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
-    }
-  ];
+  const cartItems = [ ];
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const tax = subtotal * 0.25; // 25% Danish VAT
@@ -68,7 +53,7 @@ export default function Cart() {
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="w-8 text-center">{item.quantity}</span>
-                        <button className="p-1 hover:bg-gray-100 rounded">
+                        <button className="p-1 hover:bg-brand>
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
