@@ -56,24 +56,7 @@ export default function HeroSection() {
           med ekspertise og omhu. Hurtigt og pålideligt.
         </p>
 
-        {/* Bullets (icono amarillo) */}
-        <div
-          className={[
-            'mt-6 flex flex-col sm:flex-row justify-center gap-6 text-white',
-            mounted ? 'animate-slideUp4' : 'opacity-0',
-          ].join(' ')}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <CheckCircle2 className="text-yellow-400" size={22} />
-            <span className="font-medium">Professionelle til hver opgave</span>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <CheckCircle2 className="text-yellow-400" size={22} />
-            <span className="font-medium">Mere end 10 års erfaring</span>
-          </div>
-        </div>
-
-        {/* CTA buttons */}
+              {/* CTA buttons */}
         <div
           className={[
             'mt-8 flex flex-col sm:flex-row justify-center gap-4',
