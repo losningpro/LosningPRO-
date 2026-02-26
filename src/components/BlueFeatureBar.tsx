@@ -22,7 +22,7 @@ export default function BlueFeatureBar() {
       icon: '🛡️',
       title: 'Mere end 10 års erfaring',
       subtitle: 'Erfaring du kan stole på'
-    }
+    },
   ];
 
   return (
@@ -35,9 +35,4 @@ export default function BlueFeatureBar() {
               <h3 className="font-semibold text-lg">{item.title}</h3>
               <p className="opacity-85 mt-1 text-sm">{item.subtitle}</p>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+          )
