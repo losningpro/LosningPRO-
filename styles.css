@@ -75,6 +75,9 @@
   @keyframes slideUpFade {
     0% { opacity: 0; transform: translateY(22px); }
     100% { opacity: 1; transform: translateY(0); }
+    .bg-brand {
+  background-color: hsl(var(--brand-blue));
+}
   }
 
   .animate-slideUp1 { animation: slideUpFade 650ms ease-out both; animation-delay: 80ms; }
