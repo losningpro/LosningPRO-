@@ -8,13 +8,7 @@ type Product = {
   image: string;
   category: string;
   slug?: string;
-  href?: string;
 };
-
-type BannerConfig = {
-  message: string;
-  position: "top" | "bottom";
-} | null;
 
 export default function ProductSlider({
   title,
@@ -28,10 +22,10 @@ export default function ProductSlider({
   const [bannerVisible, setBannerVisible] = useState(false);
   const [warningAcknowledged, setWarningAcknowledged] = useState(false);
 
-  const bannerConfig: BannerConfig = useMemo(() => {
-    const normalized = title.trim().toLowerCase();
+  const normalizedTitle = title.trim().toLowerCase();
 
-    if (normalized === "populære materialer") {
+  const bannerConfig = useMemo(() => {
+    if (normalizedTitle === "populære materialer") {
       return {
         message:
           "⚠️ Leveringstiderne kan variere afhængigt af leverandørerne.",
@@ -39,7 +33,7 @@ export default function ProductSlider({
       };
     }
 
-    if (normalized === "populære tjenester") {
+    if (normalizedTitle === "populære tjenester") {
       return {
         message:
           "⚠️ Der er et opstartsgebyr på 399 kr. knyttet til tjenesterne, som betales én gang pr. besøg.",
@@ -48,7 +42,7 @@ export default function ProductSlider({
     }
 
     return null;
-  }, [title]);
+  }, [normalizedTitle]);
 
   const handleFirstProtectedClick = (
     e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>
@@ -66,14 +60,20 @@ export default function ProductSlider({
   return (
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Banner arriba solo para materialer */}
         {bannerConfig?.position === "top" && bannerVisible && (
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
             {bannerConfig.message}
           </div>
         )}
 
+        {/* Título */}
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{title}</h3>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+            {title}
+          </h3>
+
           <Link
             to={viewAllLink}
             className="text-sm font-semibold text-blue-700 hover:underline"
@@ -82,22 +82,23 @@ export default function ProductSlider({
           </Link>
         </div>
 
+        {/* Banner debajo solo para tjenester */}
         {bannerConfig?.position === "bottom" && bannerVisible && (
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
             {bannerConfig.message}
           </div>
         )}
 
+        {/* Carrusel */}
         <div
           className="flex gap-4 overflow-x-auto pb-2"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {products.map((p) => {
             const target =
-              p.href ??
-              (title.trim().toLowerCase() === "populære tjenester"
+              normalizedTitle === "populære tjenester"
                 ? `/tjenester/${p.slug ?? p.id}`
-                : `/kob/${p.slug ?? p.id}`);
+                : `/kob/${p.slug ?? p.id}`;
 
             return (
               <div
@@ -121,9 +122,11 @@ export default function ProductSlider({
 
                   <div className="p-4">
                     <div className="text-xs text-gray-500">{p.category}</div>
+
                     <div className="font-semibold text-gray-900 mt-1">
                       {p.name}
                     </div>
+
                     <div className="text-gray-700 mt-2">{p.price} kr</div>
 
                     <span className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-orange-500 text-white py-2 font-semibold hover:bg-blue-700 transition">
@@ -135,6 +138,7 @@ export default function ProductSlider({
             );
           })}
         </div>
+
       </div>
     </section>
   );
