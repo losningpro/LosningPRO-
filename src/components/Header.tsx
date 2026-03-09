@@ -40,7 +40,7 @@ const Header = () => {
               </span>
             </Link>
             <a
-              href="tel:+4543123456"
+              href="tel:+4552717810"
               className="hidden sm:flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Phone className="h-4 w-4" />
@@ -163,7 +163,7 @@ const Header = () => {
             </nav>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <a
-                href="tel:+4543123456"
+                href="tel:+4552717810"
                 className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Phone className="h-4 w-4" />
