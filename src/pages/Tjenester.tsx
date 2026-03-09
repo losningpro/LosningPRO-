@@ -9,7 +9,7 @@ export default function Tjenester() {
       <Header />
       <main>
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary to-primary/80 text-white py-16">
+        <section className="bg-gradient-to-br from-brand to-brand/80 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl lg:text-5xl font-bold mb-6">Vores Tjenester</h1>
             <p className="text-xl text-white/90 max-w-3xl mx-auto">
@@ -23,7 +23,7 @@ export default function Tjenester() {
         <ServiceGrid />
 
         {/* Why Choose Us */}
-        <section className="py-16 bg-gray-50">
+        <section className="bg-gradient-to-br from-brand to-brand/80 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Hvorfor vælge LøsningPRO?</h2>
@@ -67,7 +67,7 @@ export default function Tjenester() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 bg-primary text-white">
+        <section className="bg-gradient-to-br from-brand to-brand/80 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-4">Klar til at komme i gang?</h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
@@ -75,10 +75,10 @@ export default function Tjenester() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
-                href="tel:+4543123456" 
+                href="tel:+4552717810" 
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary font-semibold rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Ring nu: +45 43 12 34 56
+                Ring nu: +45 52 71 78 10
               </a>
               <a 
                 href="mailto:info@losningpro.dk" 
