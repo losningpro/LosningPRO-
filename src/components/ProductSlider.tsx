@@ -82,12 +82,15 @@ export default function ProductSlider({
   return (
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* TOP BANNER (materials) */}
         {bannerConfig?.position === "top" && bannerVisible && (
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
             {bannerConfig.message}
           </div>
         )}
 
+        {/* TITLE */}
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
             {title}
@@ -101,12 +104,7 @@ export default function ProductSlider({
           </Link>
         </div>
 
-        {bannerConfig?.position === "bottom" && bannerVisible && (
-          <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
-            {bannerConfig.message}
-          </div>
-        )}
-
+        {/* SLIDER */}
         <div
           className="flex gap-4 overflow-x-auto pb-2 no-scrollbar"
           style={{ WebkitOverflowScrolling: "touch" }}
@@ -156,6 +154,14 @@ export default function ProductSlider({
             );
           })}
         </div>
+
+        {/* BOTTOM BANNER (services) */}
+        {bannerConfig?.position === "bottom" && bannerVisible && (
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
+            {bannerConfig.message}
+          </div>
+        )}
+
       </div>
     </section>
   );
