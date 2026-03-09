@@ -77,10 +77,10 @@ export default function Tjenester() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="tel:+4543123456"
+                href="tel:+4552717810"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white text-brand font-semibold rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Ring nu: +45 43 12 34 56
+                Ring nu: +45 52 71 78 10
               </a>
 
               <a
