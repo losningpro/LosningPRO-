@@ -13,11 +13,9 @@ import Kontakt from "./pages/Kontakt";
 import Tjenester from "./pages/Tjenester";
 import HvordanFungerer from "./pages/HvordanFungerer";
 import JoinTenant from "./pages/JoinTenant";
+
 import Kob from "./pages/Kob";
 import ServiceCategory from "./pages/ServiceCategory";
-import Checkout from "./pages/Checkout";
-import JuridiskInfo from "./pages/JuridiskInfo";
-import Arbejdsgalleri from "./pages/Arbejdsgalleri";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -28,12 +26,21 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
+        {/* MARKET */}
+        <Route path="/kob" element={<Kob />} />
+        <Route path="/kob/:id" element={<Kob />} />
 
+        {/* SERVICE CATEGORIES */}
+        <Route path="/tjenester/:serviceSlug" element={<ServiceCategory />} />
+
+        {/* CART */}
+        <Route path="/cart" element={<Cart />} />
+
+        {/* LOGIN */}
         <Route path="/login" element={<Login />} />
         <Route path="/log-pa" element={<Login />} />
 
+        {/* AUTH */}
         <Route
           path="/join"
           element={
@@ -52,22 +59,13 @@ export default function App() {
           }
         />
 
+        {/* STATIC */}
         <Route path="/om-os" element={<OmOs />} />
         <Route path="/kontakt" element={<Kontakt />} />
-        <Route path="/juridisk-information" element={<JuridiskInfo />} />
-        <Route path="/arbejdsgalleri" element={<Arbejdsgalleri />} />
-
-        {/* Marketplace */}
-        <Route path="/kob" element={<Kob />} />
-        <Route path="/kob/:slug" element={<Kob />} />
-
-        {/* Services */}
         <Route path="/tjenester" element={<Tjenester />} />
-        <Route path="/tjenester/:slug" element={<ServiceCategory />} />
-
         <Route path="/hvordan-fungerer" element={<HvordanFungerer />} />
 
-        {/* Fallback */}
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
 
