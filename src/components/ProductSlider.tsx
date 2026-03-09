@@ -8,6 +8,7 @@ type Product = {
   image: string;
   category: string;
   slug?: string;
+  href?: string;
 };
 
 export default function ProductSlider({
@@ -107,14 +108,15 @@ export default function ProductSlider({
         )}
 
         <div
-          className="flex gap-4 overflow-x-auto pb-2"
+          className="flex gap-4 overflow-x-auto pb-2 no-scrollbar"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {products.map((p) => {
             const target =
-              normalizedTitle === "populære tjenester"
+              p.href ??
+              (normalizedTitle === "populære tjenester"
                 ? `/tjenester/${p.slug ?? p.id}`
-                : `/kob/${p.slug ?? p.id}`;
+                : `/kob/${p.slug ?? p.id}`);
 
             return (
               <div
