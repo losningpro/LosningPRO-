@@ -53,7 +53,7 @@ export default function Cart() {
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="w-8 text-center">{item.quantity}</span>
-                        <button className="p-1 hover:bg-brand>
+                        <button className="p-1 hover:bg-brand">
                           <Plus className="h-4 w-4" />
                         </button>
                       </div>
