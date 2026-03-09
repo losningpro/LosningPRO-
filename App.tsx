@@ -1,53 +1,77 @@
-import React from 'react';
-import '@radix-ui/themes/styles.css';
-import { Theme } from '@radix-ui/themes';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import Home from './src/pages/Home';
-import Kob from './src/pages/Kob';
-import Tjenester from './src/pages/Tjenester';
-import ServiceCategory from './src/pages/ServiceCategory';
-import HvordanFungerer from './src/pages/HvordanFungerer';
-import OmOs from './src/pages/OmOs';
-import Arbejdsgalleri from './src/pages/Arbejdsgalleri';
-import Kontakt from './src/pages/Kontakt';
-import Cart from './src/pages/Cart';
-import Checkout from './src/pages/Checkout';
-import Login from './src/pages/login';
-import NotFound from './src/pages/NotFound';
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import { RequireAuth } from "./components/requireauth";
 
-const App: React.FC = () => {
+import Home from "./pages/Home";
+import Cart from "./pages/Cart";
+import Login from "./pages/login";
+import Konto from "./pages/konto";
+import OmOs from "./pages/OmOs";
+import Kontakt from "./pages/Kontakt";
+import Tjenester from "./pages/Tjenester";
+import HvordanFungerer from "./pages/HvordanFungerer";
+import JoinTenant from "./pages/JoinTenant";
+import Kob from "./pages/Kob";
+import ServiceCategory from "./pages/ServiceCategory";
+import Checkout from "./pages/Checkout";
+import JuridiskInfo from "./pages/JuridiskInfo";
+import Arbejdsgalleri from "./pages/Arbejdsgalleri";
+import NotFound from "./pages/NotFound";
+
+export default function App() {
   return (
-    <Theme appearance="inherit" radius="large" scaling="100%">
-      <Router>
-        <main className="min-h-screen font-sans">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/kob" element={<Kob />} />
-            <Route path="/tjenester" element={<Tjenester />} />
-            <Route path="/tjenester/:serviceSlug" element={<ServiceCategory />} />
-            <Route path="/hvordan-fungerer" element={<HvordanFungerer />} />
-            <Route path="/om-os" element={<OmOs />} />
-            <Route path="/arbejdsgalleri" element={<Arbejdsgalleri />} />
-            <Route path="/kontakt" element={<Kontakt />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/log-pa" element={<Login />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            newestOnTop
-            closeOnClick
-            pauseOnHover
-          />
-        </main>
-      </Router>
-    </Theme>
+    <Router>
+      <Header />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/log-pa" element={<Login />} />
+
+        <Route
+          path="/join"
+          element={
+            <RequireAuth>
+              <JoinTenant />
+            </RequireAuth>
+          }
+        />
+
+        <Route
+          path="/konto/*"
+          element={
+            <RequireAuth>
+              <Konto />
+            </RequireAuth>
+          }
+        />
+
+        <Route path="/om-os" element={<OmOs />} />
+        <Route path="/kontakt" element={<Kontakt />} />
+        <Route path="/juridisk-information" element={<JuridiskInfo />} />
+        <Route path="/arbejdsgalleri" element={<Arbejdsgalleri />} />
+
+        {/* Marketplace */}
+        <Route path="/kob" element={<Kob />} />
+        <Route path="/kob/:slug" element={<Kob />} />
+
+        {/* Services */}
+        <Route path="/tjenester" element={<Tjenester />} />
+        <Route path="/tjenester/:slug" element={<ServiceCategory />} />
+
+        <Route path="/hvordan-fungerer" element={<HvordanFungerer />} />
+
+        {/* Fallback */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      <Footer />
+    </Router>
   );
 }
-
-export default App;
