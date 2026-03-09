@@ -6,6 +6,7 @@ import BlueFeatureBar from '../components/BlueFeatureBar';
 import ProductSlider from '../components/ProductSlider';
 import HowItWorks from '../components/HowItWorks';
 import ContactForm from '../components/ContactForm';
+import { useMarketStore } from '../lib/store';
 
 function SeoSchema() {
   const jsonLd = {
@@ -46,33 +47,12 @@ function SeoSchema() {
   );
 }
 
-/** ✅ NO TOCAR: tus 6 materiales con tus imágenes */
-const materialProducts = [
-  { id: '1', name: 'LED Pære E27 10W varm lys', price: 29, image: '/00025.jpg', category: 'Material' },
-  { id: '2', name: 'Ophæng E27', price: 149, image: '/00021.jpg', category: 'Material' },
-  { id: '3', name: 'Papirbole lampe', price: 99, image: '/00022.jpg', category: 'Material' },
-  { id: '4', name: 'Nordic panel loftlampe', price: 699, image: '/00018.jpg', category: 'Material' },
-  { id: '5', name: 'Nordic plafond loftlampe', price: 649, image: '/00013.jpg', category: 'Material' },
-  { id: '6', name: 'Industrielle sort lampe', price: 749, image: '/00011.jpg', category: 'Material' },
-];
-
-/** ✅ NO TOCAR: tus 6 servicios con tus imágenes */
-const serviceProducts = [
-  { id: '7', name: 'Flytning af stikkontakt', price: 1000, image: '/enhufeflyt.png', category: 'El-Service' },
-  { id: '8', name: 'VVS Reparation', price: 650, image: '/leak.jpg', category: 'VVS-Service' },
-  {
-    id: '9',
-    name: 'Lampeophæng med kabelskjuler/kabelkanal ( 1 lampe)',
-    price: 550,
-    image: '/AB25.jpg',
-    category: 'El-Service',
-  },
-  { id: '10', name: 'Opvaskemaskin intallation', price: 1000, image: '/lavaplatos.png', category: 'VVS-Service' },
-  { id: '11', name: 'Toiletter ude af drift', price: 650, image: '/00036.png', category: 'VVS-Service' },
-  { id: '12', name: 'Vask ude af drift', price: 650, image: '/00046.png', category: 'VVS-Service' },
-];
-
 export default function Home() {
+  const products = useMarketStore(state => state.products);
+  
+  const popularMaterials = products.filter(p => p.category === 'Material' && p.popular);
+  const popularServices = products.filter(p => (p.category === 'El-Service' || p.category === 'VVS-Service' || p.category === 'Tømrer') && p.popular);
+
   return (
     <div className="min-h-screen bg-white">
       <SeoSchema />
@@ -84,9 +64,9 @@ export default function Home() {
         {/* ✅ SOLO UN blue banner */}
         <BlueFeatureBar />
 
-        {/* Marketplace: 2 carruseles (como tenías) */}
-        <ProductSlider title="Populære Materialer" products={materialProducts} viewAllLink="/kob" />
-        <ProductSlider title="Populære Tjenester" products={serviceProducts} viewAllLink="/tjenester" />
+        {/* Marketplace: 2 carruseles filtrados de la BD */}
+        <ProductSlider title="Populære Materialer" products={popularMaterials} viewAllLink="/kob" />
+        <ProductSlider title="Populære Tjenester" products={popularServices} viewAllLink="/tjenester" />
 
         <HowItWorks />
 

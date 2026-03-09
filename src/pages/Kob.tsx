@@ -2,73 +2,19 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Search, Filter, ShoppingCart, Grid, List } from 'lucide-react';
-
-// Mock data for material products
-const materialProducts = [
-  {
-    id: '1',
-    name: 'LED Pære E27 9W Varm Hvid',
-    price: 89,
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    category: 'Material',
-    description: 'Energibesparende LED pære med varm hvid lys',
-    inStock: true
-  },
-  {
-    id: '2',
-    name: 'Stikkontakt Hvid Dobbelt',
-    price: 45,
-    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    category: 'Material',
-    description: 'Dobbelt stikkontakt i hvid med jordforbindelse',
-    inStock: true
-  },
-  {
-    id: '3',
-    name: 'Afbryder 1-pol Hvid',
-    price: 35,
-    image: 'https://placehold.co/400x400',
-    category: 'Material',
-    description: 'Enkelt afbryder i hvid til almindelig brug',
-    inStock: true
-  },
-  {
-    id: '4',
-    name: 'Installationskabel 2.5mm² 100m',
-    price: 1200,
-    image: 'https://placehold.co/400x400',
-    category: 'Material',
-    description: '100 meter installationskabel 2.5mm² til el-installation',
-    inStock: true
-  },
-  {
-    id: '5',
-    name: 'Sikringsautomat 16A',
-    price: 125,
-    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    category: 'Material',
-    description: 'Sikringsautomat 16A til el-tavle',
-    inStock: false
-  },
-  {
-    id: '6',
-    name: 'Loftlampe LED 24W',
-    price: 299,
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    category: 'Material',
-    description: 'Moderne loftlampe med integreret LED',
-    inStock: true
-  }
-];
+import { useMarketStore } from '../lib/store';
 
 export default function Kob() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
+  const products = useMarketStore(state => state.products);
+  const materialProducts = products.filter(p => p.category === 'Material');
+
   const filteredProducts = materialProducts.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.image && product.image.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -137,8 +83,6 @@ export default function Kob() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tilgængelighed</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
                     <option>Alle produkter</option>
-                    <option>På lager</option>
-                    <option>Ikke på lager</option>
                   </select>
                 </div>
                 <div>
@@ -186,19 +130,10 @@ export default function Kob() {
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-lg font-bold text-primary">{product.price} kr</span>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      product.inStock 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {product.inStock ? 'På lager' : 'Ikke på lager'}
-                    </span>
                   </div>
                   <button 
-                    disabled={!product.inStock}
                     className="w-full flex items-center justify-center space-x-2 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart className="h-4 w-4" />
@@ -225,19 +160,10 @@ export default function Kob() {
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h3>
-                        <p className="text-gray-600 mb-3">{product.description}</p>
-                        <span className={`inline-block text-xs px-2 py-1 rounded-full ${
-                          product.inStock 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {product.inStock ? 'På lager' : 'Ikke på lager'}
-                        </span>
                       </div>
                       <div className="text-right mt-4 sm:mt-0">
                         <div className="text-2xl font-bold text-primary mb-4">{product.price} kr</div>
                         <button 
-                          disabled={!product.inStock}
                           className="flex items-center space-x-2 bg-primary text-white py-2 px-6 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ShoppingCart className="h-4 w-4" />
