@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 type Product = {
@@ -19,9 +19,6 @@ export default function ProductSlider({
   products: Product[];
   viewAllLink: string;
 }) {
-  const [bannerVisible, setBannerVisible] = useState(false);
-  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
-
   const normalizedTitle = title.trim().toLowerCase();
 
   const bannerConfig = useMemo(() => {
@@ -29,7 +26,8 @@ export default function ProductSlider({
       return {
         message:
           "⚠️ Leveringstiderne kan variere afhængigt af leverandørerne.",
-        position: "top",
+        position: "top" as const,
+        storageKey: "warning_seen_populaere_materialer",
       };
     }
 
@@ -37,12 +35,31 @@ export default function ProductSlider({
       return {
         message:
           "⚠️ Der er et opstartsgebyr på 399 kr. knyttet til tjenesterne, som betales én gang pr. besøg.",
-        position: "bottom",
+        position: "bottom" as const,
+        storageKey: "warning_seen_populaere_tjenester",
       };
     }
 
     return null;
   }, [normalizedTitle]);
+
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
+
+  useEffect(() => {
+    if (!bannerConfig) {
+      setBannerVisible(false);
+      setWarningAcknowledged(true);
+      return;
+    }
+
+    const alreadySeen =
+      typeof window !== "undefined" &&
+      sessionStorage.getItem(bannerConfig.storageKey) === "true";
+
+    setWarningAcknowledged(alreadySeen);
+    setBannerVisible(false);
+  }, [bannerConfig]);
 
   const handleFirstProtectedClick = (
     e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>
@@ -54,21 +71,22 @@ export default function ProductSlider({
       e.stopPropagation();
       setBannerVisible(true);
       setWarningAcknowledged(true);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(bannerConfig.storageKey, "true");
+      }
     }
   };
 
   return (
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Banner arriba solo para materialer */}
         {bannerConfig?.position === "top" && bannerVisible && (
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
             {bannerConfig.message}
           </div>
         )}
 
-        {/* Título */}
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
             {title}
@@ -82,14 +100,12 @@ export default function ProductSlider({
           </Link>
         </div>
 
-        {/* Banner debajo solo para tjenester */}
         {bannerConfig?.position === "bottom" && bannerVisible && (
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
             {bannerConfig.message}
           </div>
         )}
 
-        {/* Carrusel */}
         <div
           className="flex gap-4 overflow-x-auto pb-2"
           style={{ WebkitOverflowScrolling: "touch" }}
@@ -138,7 +154,6 @@ export default function ProductSlider({
             );
           })}
         </div>
-
       </div>
     </section>
   );
