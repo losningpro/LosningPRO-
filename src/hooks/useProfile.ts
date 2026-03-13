@@ -16,16 +16,15 @@ export type UserProfile = {
   tenant_id: string | null;
   role: DashboardRole;
   is_platform_admin: boolean;
-  rawUserRow?: Record<string, any> | null;
+  rawUserRow?: Record<string, unknown> | null;
 };
 
-function normalizeRole(row: Record<string, any> | null, email?: string | null): UserProfile {
+function normalizeRole(
+  row: Record<string, unknown> | null,
+  email?: string | null
+): UserProfile {
   const lowerRole = String(
-    row?.role ??
-      row?.user_role ??
-      row?.type ??
-      row?.account_type ??
-      ""
+    row?.role ?? row?.user_role ?? row?.type ?? row?.account_type ?? ""
   ).toLowerCase();
 
   const isAdmin =
@@ -45,11 +44,11 @@ function normalizeRole(row: Record<string, any> | null, email?: string | null): 
 
   return {
     user_id: String(row?.id ?? row?.user_id ?? ""),
-    email: email ?? row?.email ?? null,
-    tenant_id: row?.tenant_id ?? null,
+    email: email ?? (row?.email ? String(row.email) : null),
+    tenant_id: (row?.tenant_id as string | null | undefined) ?? null,
     role,
     is_platform_admin: isAdmin,
-    rawUserRow: row ?? null,
+    rawUserRow: row,
   };
 }
 
@@ -74,18 +73,17 @@ export function useProfile() {
 
       const authUserId = session.user.id;
       const authEmail = session.user.email ?? null;
-
-      let userRow: Record<string, any> | null = null;
+      let userRow: Record<string, unknown> | null = null;
 
       const byId = await supabase.from("user").select("*").eq("id", authUserId).maybeSingle();
       if (!byId.error && byId.data) {
-        userRow = byId.data as Record<string, any>;
+        userRow = byId.data as Record<string, unknown>;
       }
 
       if (!userRow && authEmail) {
         const byEmail = await supabase.from("user").select("*").eq("email", authEmail).maybeSingle();
         if (!byEmail.error && byEmail.data) {
-          userRow = byEmail.data as Record<string, any>;
+          userRow = byEmail.data as Record<string, unknown>;
         }
       }
 
@@ -97,7 +95,7 @@ export function useProfile() {
       }
     }
 
-    run();
+    void run();
 
     return () => {
       cancelled = true;
