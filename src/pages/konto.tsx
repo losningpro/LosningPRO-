@@ -219,7 +219,7 @@ function DashboardShell({
 
           <div className="mt-8 border-t border-slate-800 pt-6">
             <button
-              onClick={onLogout}
+              onClick={() => void onLogout()}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700"
             >
               <LogOut className="h-4 w-4" />
@@ -304,9 +304,9 @@ function GenericTableModule({
   title: string;
   description: string;
   table: string;
-  emptyTemplate?: Record<string, any>;
+  emptyTemplate?: Record<string, unknown>;
 }) {
-  const [rows, setRows] = useState<Record<string, any>[]>([]);
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -327,12 +327,12 @@ function GenericTableModule({
       return;
     }
 
-    setRows((data ?? []) as Record<string, any>[]);
+    setRows((data ?? []) as Record<string, unknown>[]);
     setLoading(false);
   }
 
   useEffect(() => {
-    load();
+    void load();
   }, [table]);
 
   async function save() {
@@ -340,10 +340,10 @@ function GenericTableModule({
     setError(null);
 
     try {
-      const payload = JSON.parse(editor);
+      const payload = JSON.parse(editor) as Record<string, unknown>;
 
       if (payload?.id) {
-        const { error } = await supabase.from(table).update(payload).eq("id", payload.id);
+        const { error } = await supabase.from(table).update(payload).eq("id", payload.id as string);
         if (error) throw error;
       } else {
         const { error } = await supabase.from(table).insert(payload);
@@ -352,15 +352,15 @@ function GenericTableModule({
 
       await load();
       setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
-    } catch (err: any) {
-      setError(err?.message ?? "Kunne ikke gemme posten.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke gemme posten.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function removeRow(row: Record<string, any>) {
-    if (!row?.id) {
+  async function removeRow(row: Record<string, unknown>) {
+    if (!row?.id || typeof row.id !== "string") {
       setError("Kan ikke slette en post uden id.");
       return;
     }
@@ -378,7 +378,7 @@ function GenericTableModule({
   }
 
   const columns = useMemo(() => {
-    if (!rows.length) return [];
+    if (!rows.length) return [] as string[];
     const set = new Set<string>();
     rows.forEach((row) => Object.keys(row).forEach((key) => set.add(key)));
     return Array.from(set).slice(0, 8);
@@ -395,7 +395,7 @@ function GenericTableModule({
 
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={load}
+            onClick={() => void load()}
             className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm"
           >
             Opdater
@@ -435,7 +435,7 @@ function GenericTableModule({
                 </tr>
               ) : (
                 rows.map((row, idx) => (
-                  <tr key={row.id ?? idx} className="border-b border-slate-100 align-top">
+                  <tr key={(row.id as string | undefined) ?? idx} className="border-b border-slate-100 align-top">
                     {columns.map((col) => (
                       <td key={col} className="py-3 pr-4 text-slate-700 max-w-[220px]">
                         <div className="line-clamp-3 break-words">
@@ -454,7 +454,7 @@ function GenericTableModule({
                           Redigér
                         </button>
                         <button
-                          onClick={() => removeRow(row)}
+                          onClick={() => void removeRow(row)}
                           className="rounded-lg border border-red-300 text-red-700 px-3 py-1.5"
                         >
                           Slet
@@ -480,7 +480,7 @@ function GenericTableModule({
         />
         <div className="mt-4">
           <button
-            onClick={save}
+            onClick={() => void save()}
             disabled={saving}
             className="rounded-xl bg-blue-600 text-white px-5 py-2.5 text-sm disabled:opacity-60"
           >
@@ -518,7 +518,7 @@ function SettingsPage({
 
         <div className="mt-5">
           <button
-            onClick={onLogout}
+            onClick={() => void onLogout()}
             className="rounded-xl bg-slate-900 text-white px-5 py-2.5 text-sm"
           >
             Log ud
@@ -558,7 +558,7 @@ function RoleProtectedModule({
     return <div className="text-sm text-slate-500">Settings requires wrapper props.</div>;
   }
 
-  const defaultTemplates: Record<string, Record<string, any>> = {
+  const defaultTemplates: Record<string, Record<string, unknown>> = {
     bookings: {
       product_slug: "",
       user_id: "",
@@ -677,7 +677,10 @@ export default function Konto() {
           path="*"
           element={
             visibleModules.length > 0 ? (
-              <Navigate to={visibleModules[0].path ? `/konto/${visibleModules[0].path}` : "/konto"} replace />
+              <Navigate
+                to={visibleModules[0].path ? `/konto/${visibleModules[0].path}` : "/konto"}
+                replace
+              />
             ) : (
               <Navigate to="/konto" replace />
             )
