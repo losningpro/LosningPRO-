@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="https://assets.meku.dev/attachments/7c302cd1-7952-4482-a7fb-955e01b4ea57/1771253236422.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LøsningPRO</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="generator" content="Meku" />
+    <meta name="description" content="Multi-Tenant SaaS Marketplace Platform for homeservice professional workers as: electricians, plumbers, carpenters, murmesters,..." />
+    <meta name="author" content="Meku" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://multi-tenant-saas-marketplace-platform-for-l-sning-2nl.meku.app" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://multi-tenant-saas-marketplace-platform-for-l-sning-2nl.meku.app" />
+    <meta property="og:title" content="LøsningPRO" />
+    <meta property="og:description" content="Multi-Tenant SaaS Marketplace Platform for homeservice professional workers as: electricians, plumbers, carpenters, murmesters,..." />
+    <meta property="og:image" content="https://assets.meku.dev/attachments/7c302cd1-7952-4482-a7fb-955e01b4ea57/1771254886221.png" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="LøsningPRO" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@meku_dev" />
+    <meta name="twitter:title" content="LøsningPRO" />
+    <meta name="twitter:description" content="Multi-Tenant SaaS Marketplace Platform for homeservice professional workers as: electricians, plumbers, carpenters, murmesters,..." />
+    <meta name="twitter:image" content="https://assets.meku.dev/attachments/7c302cd1-7952-4482-a7fb-955e01b4ea57/1771254886221.png" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "LøsningPRO",
+  "description": "Multi-Tenant SaaS Marketplace Platform for homeservice professional workers as: electricians, plumbers, carpenters, murmesters,...",
+  "url": "https://multi-tenant-saas-marketplace-platform-for-l-sning-2nl.meku.app",
+  "image": "https://assets.meku.dev/attachments/7c302cd1-7952-4482-a7fb-955e01b4ea57/1771254886221.png",
+  "creator": {
+    "@type": "Organization",
+    "name": "Meku",
+    "url": "https://meku.dev"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Meku",
+    "url": "https://meku.dev"
+  }
+}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
+
