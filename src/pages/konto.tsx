@@ -1,145 +1,693 @@
-import React, { useState } from 'react';
-import { useMarketStore, Product } from '../lib/store';
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
+  CalendarDays,
+  ClipboardList,
+  Boxes,
+  Image,
+  Users,
+  Building2,
+  FileText,
+  Settings,
+  Wallet,
+  PackageSearch,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 
-export default function Konto() {
-  const { products, addProduct, updateProduct, deleteProduct } = useMarketStore();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  const [formData, setFormData] = useState<Partial<Product>>({
-    name: '',
-    price: 0,
-    category: 'Material',
-    subcategory: '',
-    image: '',
-    popular: false,
-  });
+import { supabase } from "../lib/supabase";
+import { useProfile, type DashboardRole } from "../hooks/useProfile";
+import { useSession } from "../hooks/useSession";
 
-  const handleEdit = (product: Product) => {
-    setEditingId(product.id);
-    setFormData(product);
-  };
+type ModuleKey =
+  | "oversigt"
+  | "kalender"
+  | "orders"
+  | "products"
+  | "lager"
+  | "arbejdsgalleri"
+  | "users"
+  | "tenants"
+  | "subscriptions"
+  | "finances"
+  | "docs"
+  | "settings";
 
-  const handleCreate = () => {
-    setEditingId('new');
-    setFormData({
-      name: '',
-      price: 0,
-      category: 'Material',
-      subcategory: '',
-      image: '',
-      popular: false,
-    });
-  };
+type ModuleConfig = {
+  key: ModuleKey;
+  label: string;
+  path: string;
+  table?: string;
+  icon: React.ReactNode;
+  roles: DashboardRole[];
+  description: string;
+};
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId === 'new') {
-      addProduct(formData as Omit<Product, 'id'>);
-    } else if (editingId) {
-      updateProduct(editingId, formData);
+const ALL_ROLES: DashboardRole[] = [
+  "master",
+  "tenant",
+  "medarbejder",
+  "samarbejder",
+  "partner",
+  "kunde",
+];
+
+const MODULES: ModuleConfig[] = [
+  {
+    key: "oversigt",
+    label: "Oversigt",
+    path: "",
+    icon: <LayoutDashboard className="h-4 w-4" />,
+    roles: ALL_ROLES,
+    description: "Samlet overblik over din konto og dine data.",
+  },
+  {
+    key: "kalender",
+    label: "Kalender for aftaler",
+    path: "kalender",
+    table: "bookings",
+    icon: <CalendarDays className="h-4 w-4" />,
+    roles: ALL_ROLES,
+    description: "Bookinger, tider og status.",
+  },
+  {
+    key: "orders",
+    label: "Ordrer",
+    path: "orders",
+    table: "orders",
+    icon: <ClipboardList className="h-4 w-4" />,
+    roles: ["master", "tenant", "kunde"],
+    description: "Ordrer og ordrestatus.",
+  },
+  {
+    key: "products",
+    label: "Produkter",
+    path: "products",
+    table: "products",
+    icon: <Boxes className="h-4 w-4" />,
+    roles: ["master", "tenant", "medarbejder", "samarbejder", "partner"],
+    description: "Redigering og synlighed af produkter og tjenester.",
+  },
+  {
+    key: "lager",
+    label: "Lager / marketplace",
+    path: "lager",
+    table: "products",
+    icon: <PackageSearch className="h-4 w-4" />,
+    roles: ["master", "tenant", "medarbejder", "samarbejder", "partner"],
+    description: "Hvilke produkter vises i markedet og kampagner.",
+  },
+  {
+    key: "arbejdsgalleri",
+    label: "Arbejdsgalleri",
+    path: "arbejdsgalleri",
+    table: "galleri",
+    icon: <Image className="h-4 w-4" />,
+    roles: ["master", "tenant"],
+    description: "Galleri med udført arbejde og billeder.",
+  },
+  {
+    key: "users",
+    label: "Brugerrettigheder",
+    path: "users",
+    table: "user",
+    icon: <Users className="h-4 w-4" />,
+    roles: ["master", "tenant"],
+    description: "Brugere, roller og adgang.",
+  },
+  {
+    key: "tenants",
+    label: "Tenant sites",
+    path: "tenants",
+    table: "tenants",
+    icon: <Building2 className="h-4 w-4" />,
+    roles: ["master"],
+    description: "Tenant-konfiguration og redigerbare webdata.",
+  },
+  {
+    key: "subscriptions",
+    label: "Abonnementer og kontrakter",
+    path: "subscriptions",
+    table: "subscriptions_contracts",
+    icon: <FileText className="h-4 w-4" />,
+    roles: ["master"],
+    description: "Abonnementer, kontrakter og vilkår.",
+  },
+  {
+    key: "finances",
+    label: "+/- Økonomi",
+    path: "finances",
+    table: "finance_entries",
+    icon: <Wallet className="h-4 w-4" />,
+    roles: ["master", "tenant"],
+    description: "Indtægter, udgifter og notater.",
+  },
+  {
+    key: "docs",
+    label: "Dokumenter",
+    path: "docs",
+    table: "docs",
+    icon: <FileText className="h-4 w-4" />,
+    roles: ["master", "tenant", "medarbejder", "samarbejder", "partner"],
+    description: "Interne dokumenter og filer.",
+  },
+  {
+    key: "settings",
+    label: "Andre indstillinger",
+    path: "settings",
+    icon: <Settings className="h-4 w-4" />,
+    roles: ALL_ROLES,
+    description: "Profil, session og systemindstillinger.",
+  },
+];
+
+function DashboardShell({
+  children,
+  role,
+  email,
+  onLogout,
+}: {
+  children: React.ReactNode;
+  role: DashboardRole;
+  email: string;
+  onLogout: () => Promise<void>;
+}) {
+  const visibleModules = MODULES.filter((m) => m.roles.includes(role));
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-screen">
+        <aside className="bg-slate-900 text-white p-4 lg:p-6">
+          <div className="mb-8">
+            <div className="text-xl font-bold">LøsningPRO</div>
+            <div className="text-sm text-slate-300 mt-1">Dashboard</div>
+            <div className="text-xs text-slate-400 mt-3 break-all">{email}</div>
+            <div className="inline-flex mt-3 rounded-full bg-slate-800 px-3 py-1 text-xs uppercase tracking-wide">
+              Rolle: {role}
+            </div>
+          </div>
+
+          <nav className="space-y-2">
+            {visibleModules.map((module) => {
+              const to = module.path ? `/konto/${module.path}` : "/konto";
+              return (
+                <NavLink
+                  key={module.key}
+                  to={to}
+                  end={module.path === ""}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
+                      isActive
+                        ? "bg-white text-slate-900 font-semibold"
+                        : "text-slate-200 hover:bg-slate-800"
+                    }`
+                  }
+                >
+                  {module.icon}
+                  <span>{module.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          <div className="mt-8 border-t border-slate-800 pt-6">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700"
+            >
+              <LogOut className="h-4 w-4" />
+              Log ud
+            </button>
+          </div>
+        </aside>
+
+        <main className="p-4 lg:p-8">{children}</main>
+      </div>
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl bg-white border border-slate-200 shadow-sm">
+      <div className="border-b border-slate-100 px-5 py-4">
+        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+        {description ? <p className="text-sm text-slate-500 mt-1">{description}</p> : null}
+      </div>
+      <div className="p-5">{children}</div>
+    </section>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
+      <div className="text-sm text-slate-500">{label}</div>
+      <div className="mt-2 text-2xl font-bold text-slate-900">{value}</div>
+    </div>
+  );
+}
+
+function OverviewPage({ role }: { role: DashboardRole }) {
+  return (
+    <div className="space-y-6">
+      <SectionCard
+        title="Oversigt"
+        description="Dette dashboard samler dine moduler i én sikker backoffice-løsning."
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <StatBox label="Aktiv rolle" value={role} />
+          <StatBox label="Dashboard-moduler" value={MODULES.filter((m) => m.roles.includes(role)).length} />
+          <StatBox label="Status" value="Klar" />
+          <StatBox label="Miljø" value="Vite + Supabase" />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Systemlogik"
+        description="De vigtigste sammenhænge i din nuværende arkitektur."
+      >
+        <ul className="space-y-3 text-sm text-slate-700">
+          <li>• Kalender for aftaler læser og opdaterer data i tabellen bookings.</li>
+          <li>• Ordrer bruger orders og kan senere udvides med order_items.</li>
+          <li>• Produkter og Lager / marketplace er koblet til products.</li>
+          <li>• Arbejdsgalleri er koblet til galleri.</li>
+          <li>• Brugerrettigheder bruger user.</li>
+          <li>• Tenant sites bruger tenants og kan senere udvides med tenant_sites.</li>
+        </ul>
+      </SectionCard>
+    </div>
+  );
+}
+
+function GenericTableModule({
+  title,
+  description,
+  table,
+  emptyTemplate,
+}: {
+  title: string;
+  description: string;
+  table: string;
+  emptyTemplate?: Record<string, any>;
+}) {
+  const [rows, setRows] = useState<Record<string, any>[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editor, setEditor] = useState<string>(
+    JSON.stringify(emptyTemplate ?? {}, null, 2)
+  );
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await supabase.from(table).select("*").limit(100);
+
+    if (error) {
+      setRows([]);
+      setError(error.message);
+      setLoading(false);
+      return;
     }
-    setEditingId(null);
+
+    setRows((data ?? []) as Record<string, any>[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, [table]);
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+
+    try {
+      const payload = JSON.parse(editor);
+
+      if (payload?.id) {
+        const { error } = await supabase.from(table).update(payload).eq("id", payload.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from(table).insert(payload);
+        if (error) throw error;
+      }
+
+      await load();
+      setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
+    } catch (err: any) {
+      setError(err?.message ?? "Kunne ikke gemme posten.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeRow(row: Record<string, any>) {
+    if (!row?.id) {
+      setError("Kan ikke slette en post uden id.");
+      return;
+    }
+
+    const ok = window.confirm("Vil du slette denne post?");
+    if (!ok) return;
+
+    const { error } = await supabase.from(table).delete().eq("id", row.id);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    await load();
+  }
+
+  const columns = useMemo(() => {
+    if (!rows.length) return [];
+    const set = new Set<string>();
+    rows.forEach((row) => Object.keys(row).forEach((key) => set.add(key)));
+    return Array.from(set).slice(0, 8);
+  }, [rows]);
+
+  return (
+    <div className="space-y-6">
+      <SectionCard title={title} description={description}>
+        {error ? (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={load}
+            className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm"
+          >
+            Opdater
+          </button>
+          <button
+            onClick={() => setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2))}
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
+          >
+            Ny post
+          </button>
+        </div>
+
+        <div className="mt-5 overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200">
+                {columns.map((col) => (
+                  <th key={col} className="text-left py-3 pr-4 font-semibold text-slate-700">
+                    {col}
+                  </th>
+                ))}
+                <th className="text-left py-3 pr-4 font-semibold text-slate-700">Handlinger</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td className="py-4 text-slate-500" colSpan={columns.length + 1}>
+                    Indlæser...
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td className="py-4 text-slate-500" colSpan={columns.length + 1}>
+                    Ingen data endnu i tabellen {table}.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row, idx) => (
+                  <tr key={row.id ?? idx} className="border-b border-slate-100 align-top">
+                    {columns.map((col) => (
+                      <td key={col} className="py-3 pr-4 text-slate-700 max-w-[220px]">
+                        <div className="line-clamp-3 break-words">
+                          {typeof row[col] === "object"
+                            ? JSON.stringify(row[col])
+                            : String(row[col] ?? "")}
+                        </div>
+                      </td>
+                    ))}
+                    <td className="py-3 pr-4">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setEditor(JSON.stringify(row, null, 2))}
+                          className="rounded-lg border border-slate-300 px-3 py-1.5"
+                        >
+                          Redigér
+                        </button>
+                        <button
+                          onClick={() => removeRow(row)}
+                          className="rounded-lg border border-red-300 text-red-700 px-3 py-1.5"
+                        >
+                          Slet
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="JSON-editor"
+        description="Bruges til hurtig oprettelse og redigering uden at bryde den eksisterende arkitektur."
+      >
+        <textarea
+          className="w-full min-h-[320px] rounded-xl border border-slate-300 p-4 font-mono text-sm"
+          value={editor}
+          onChange={(e) => setEditor(e.target.value)}
+        />
+        <div className="mt-4">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="rounded-xl bg-blue-600 text-white px-5 py-2.5 text-sm disabled:opacity-60"
+          >
+            {saving ? "Gemmer..." : "Gem post"}
+          </button>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+function SettingsPage({
+  email,
+  role,
+  onLogout,
+}: {
+  email: string;
+  role: DashboardRole;
+  onLogout: () => Promise<void>;
+}) {
+  return (
+    <div className="space-y-6">
+      <SectionCard
+        title="Andre indstillinger"
+        description="Brugeroplysninger og hurtige handlinger."
+      >
+        <div className="space-y-3 text-sm text-slate-700">
+          <div>
+            <span className="font-semibold">Email:</span> {email}
+          </div>
+          <div>
+            <span className="font-semibold">Rolle:</span> {role}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <button
+            onClick={onLogout}
+            className="rounded-xl bg-slate-900 text-white px-5 py-2.5 text-sm"
+          >
+            Log ud
+          </button>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+function AccessDenied() {
+  return (
+    <SectionCard title="Ingen adgang" description="Denne side er ikke synlig for din rolle.">
+      <div className="text-sm text-slate-600">
+        Kontakt administratoren, hvis du mener, at dette er en fejl.
+      </div>
+    </SectionCard>
+  );
+}
+
+function RoleProtectedModule({
+  role,
+  module,
+}: {
+  role: DashboardRole;
+  module: ModuleConfig;
+}) {
+  if (!module.roles.includes(role)) {
+    return <AccessDenied />;
+  }
+
+  if (module.key === "oversigt") {
+    return <OverviewPage role={role} />;
+  }
+
+  if (module.key === "settings") {
+    return <div className="text-sm text-slate-500">Settings requires wrapper props.</div>;
+  }
+
+  const defaultTemplates: Record<string, Record<string, any>> = {
+    bookings: {
+      product_slug: "",
+      user_id: "",
+      assigned_to: null,
+      start_time: new Date().toISOString(),
+      end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      status: "pending",
+    },
+    orders: {
+      status: "pending",
+      notes: "",
+    },
+    products: {
+      name: "",
+      slug: "",
+      description: "",
+      price_dkk: 0,
+      visible: true,
+    },
+    galleri: {
+      title: "",
+      image_url: "",
+      description: "",
+      visible: true,
+    },
+    user: {
+      email: "",
+      role: "kunde",
+      tenant_id: null,
+      is_master: false,
+    },
+    tenants: {
+      name: "",
+      slug: "",
+      active: true,
+    },
+    subscriptions_contracts: {
+      title: "",
+      customer_email: "",
+      status: "draft",
+      notes: "",
+    },
+    finance_entries: {
+      title: "",
+      amount: 0,
+      kind: "expense",
+      notes: "",
+    },
+    docs: {
+      title: "",
+      content: "",
+      visible_to_role: "master",
+    },
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-white min-h-[80vh]">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Backoffice Market Management</h1>
-        <button 
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
-        >
-          Add New Product/Service
-        </button>
-      </div>
+    <GenericTableModule
+      title={module.label}
+      description={module.description}
+      table={module.table ?? ""}
+      emptyTemplate={defaultTemplates[module.table ?? ""] ?? {}}
+    />
+  );
+}
 
-      {editingId && (
-        <form onSubmit={handleSubmit} className="bg-gray-50 p-6 rounded-xl border mb-8 space-y-4">
-          <h2 className="text-xl font-bold">{editingId === 'new' ? 'New Item' : 'Edit Item'}</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input 
-              required
-              placeholder="Name"
-              className="border p-2 rounded"
-              value={formData.name || ''}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-            />
-            <input 
-              required
-              type="number"
-              placeholder="Price"
-              className="border p-2 rounded"
-              value={formData.price || ''}
-              onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-            />
-            <select 
-              className="border p-2 rounded"
-              value={formData.category}
-              onChange={e => setFormData({ ...formData, category: e.target.value })}
-            >
-              <option value="Material">Material</option>
-              <option value="El-Service">El-Service</option>
-              <option value="VVS-Service">VVS-Service</option>
-              <option value="Tømrer">Tømrer</option>
-            </select>
-            <input 
-              placeholder="Subcategory (e.g. 'el', 'vvs')"
-              className="border p-2 rounded"
-              value={formData.subcategory || ''}
-              onChange={e => setFormData({ ...formData, subcategory: e.target.value })}
-            />
-            <input 
-              placeholder="Image URL"
-              className="border p-2 rounded"
-              value={formData.image || ''}
-              onChange={e => setFormData({ ...formData, image: e.target.value })}
-            />
-            <label className="flex items-center space-x-2">
-              <input 
-                type="checkbox"
-                checked={formData.popular || false}
-                onChange={e => setFormData({ ...formData, popular: e.target.checked })}
+export default function Konto() {
+  const nav = useNavigate();
+  const loc = useLocation();
+  const { session, loading: sessionLoading } = useSession();
+  const { profile, loading: profileLoading } = useProfile();
+
+  const role: DashboardRole = profile?.role ?? "kunde";
+  const email = session?.user?.email ?? "";
+
+  async function onLogout() {
+    await supabase.auth.signOut();
+    nav("/log-pa");
+  }
+
+  if (sessionLoading || profileLoading) {
+    return <div className="p-6">Indlæser dashboard…</div>;
+  }
+
+  if (!session) {
+    return <Navigate to="/log-pa" replace />;
+  }
+
+  const visibleModules = MODULES.filter((m) => m.roles.includes(role));
+
+  return (
+    <DashboardShell role={role} email={email} onLogout={onLogout}>
+      <Routes>
+        <Route path="/" element={<OverviewPage role={role} />} />
+
+        {MODULES.filter((m) => m.path).map((module) => {
+          if (module.key === "settings") {
+            return (
+              <Route
+                key={module.key}
+                path={module.path}
+                element={<SettingsPage email={email} role={role} onLogout={onLogout} />}
               />
-              <span>Show in Popular carousels (Frontpage)</span>
-            </label>
-          </div>
-          
-          <div className="flex space-x-4">
-            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">Save</button>
-            <button type="button" onClick={() => setEditingId(null)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-          </div>
-        </form>
-      )}
+            );
+          }
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(p => (
-          <div key={p.id} className="border rounded-xl p-4 shadow-sm flex flex-col">
-            <div className="h-32 bg-gray-100 rounded mb-4 overflow-hidden">
-              <img src={p.image || 'https://via.placeholder.com/150'} alt={p.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="text-xs text-gray-500 mb-1">{p.category} {p.subcategory && `> ${p.subcategory}`}</div>
-            <div className="font-bold text-lg mb-2">{p.name}</div>
-            <div className="text-lg bg-gray-100 self-start px-2 py-1 rounded mb-4">{p.price} kr</div>
-            {p.popular && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded inline-block w-fit mb-4">★ Popular</span>}
-            
-            <div className="mt-auto flex justify-end space-x-2 border-t pt-4">
-              <button 
-                onClick={() => handleEdit(p)}
-                className="text-blue-600 hover:text-blue-800 font-semibold"
-              >
-                Edit
-              </button>
-              <button 
-                onClick={() => deleteProduct(p.id)}
-                className="text-red-600 hover:text-red-800 font-semibold"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+          return (
+            <Route
+              key={module.key}
+              path={module.path}
+              element={<RoleProtectedModule role={role} module={module} />}
+            />
+          );
+        })}
+
+        <Route
+          path="*"
+          element={
+            visibleModules.length > 0 ? (
+              <Navigate to={visibleModules[0].path ? `/konto/${visibleModules[0].path}` : "/konto"} replace />
+            ) : (
+              <Navigate to="/konto" replace />
+            )
+          }
+        />
+      </Routes>
+
+      {loc.pathname === "/konto" && visibleModules.length === 0 ? (
+        <div className="mt-4 text-sm text-slate-500">Ingen moduler tilgængelige for denne bruger.</div>
+      ) : null}
+    </DashboardShell>
   );
 }
