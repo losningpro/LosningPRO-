@@ -7,26 +7,26 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Header from "./src/components/Header";
-import Footer from "./src/components/Footer";
-import { RequireAuth } from "./src/components/requireauth";
-import { CartProvider } from "./src/cart/cart.store";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import { RequireAuth } from "./components/requireauth";
+import { CartProvider } from "./cart/cart.store";
 
-import Home from "./src/pages/Home";
-import Cart from "./src/pages/Cart";
-import Login from "./src/pages/login";
-import Konto from "./src/pages/konto";
-import OmOs from "./src/pages/OmOs";
-import Kontakt from "./src/pages/Kontakt";
-import Tjenester from "./src/pages/Tjenester";
-import HvordanFungerer from "./src/pages/HvordanFungerer";
-import JoinTenant from "./src/pages/JoinTenant";
-import Kob from "./src/pages/Kob";
-import Arbejdsgalleri from "./src/pages/Arbejdsgalleri";
-import Info from "./src/pages/Info";
-import JuridiskInfo from "./src/pages/JuridiskInfo";
-import ServiceCategory from "./src/pages/ServiceCategory";
-import NotFound from "./src/pages/NotFound";
+import Home from "./pages/Home";
+import Cart from "./pages/Cart";
+import Login from "./pages/login";
+import Konto from "./pages/konto";
+import OmOs from "./pages/OmOs";
+import Kontakt from "./pages/Kontakt";
+import Tjenester from "./pages/Tjenester";
+import HvordanFungerer from "./pages/HvordanFungerer";
+import JoinTenant from "./pages/JoinTenant";
+import Kob from "./pages/Kob";
+import Arbejdsgalleri from "./pages/Arbejdsgalleri";
+import Info from "./pages/Info";
+import JuridiskInfo from "./pages/JuridiskInfo";
+import ServiceCategory from "./pages/ServiceCategory";
+import NotFound from "./pages/NotFound";
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
