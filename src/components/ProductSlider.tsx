@@ -1,161 +1,148 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 type Product = {
   id: string;
   name: string;
-  price: number;
-  image: string;
-  category: string;
-  slug?: string;
-  href?: string;
+  price?: number;
+  image?: string;
+  category?: string;
 };
+
+type ProductSliderProps = {
+  title: string;
+  products: Product[];
+  viewAllLink?: string;
+};
+
+function InfoBanner({
+  content,
+  position,
+}: {
+  content: React.ReactNode;
+  position: "top" | "bottom";
+}) {
+  const wrapperClass = position === "top" ? "mb-4" : "mt-4";
+
+  return (
+    <div className={wrapperClass}>
+      <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
+        {content}
+      </div>
+    </div>
+  );
+}
 
 export default function ProductSlider({
   title,
   products,
   viewAllLink,
-}: {
-  title: string;
-  products: Product[];
-  viewAllLink: string;
-}) {
-  const normalizedTitle = title.trim().toLowerCase();
+}: ProductSliderProps) {
+  const [showInfo, setShowInfo] = useState(false);
 
   const bannerConfig = useMemo(() => {
+    const normalizedTitle = title.trim().toLowerCase();
+
     if (normalizedTitle === "populære materialer") {
       return {
-        message:
-          "⚠️ Leveringstiderne kan variere afhængigt af leverandørerne.",
+        enabled: true,
         position: "top" as const,
-        storageKey: "warning_seen_populaere_materialer",
+        content:
+          "Transporttid kan variere fra produkt til produkt. Kontakt os gerne før bestilling, hvis du ønsker en mere præcis leveringstid.",
       };
     }
 
     if (normalizedTitle === "populære tjenester") {
       return {
-        message:
-          "⚠️ Der er et opstartsgebyr på 399 kr. knyttet til tjenesterne, som betales én gang pr. besøg.",
+        enabled: true,
         position: "bottom" as const,
-        storageKey: "warning_seen_populaere_tjenester",
+        content:
+          "Der tillægges 399 kr. i transportomkostninger på servicebesøg. Beløbet vises som information og kan variere ved særlige opgaver.",
       };
     }
 
-    return null;
-  }, [normalizedTitle]);
+    return {
+      enabled: false,
+      position: "top" as const,
+      content: null,
+    };
+  }, [title]);
 
-  const [bannerVisible, setBannerVisible] = useState(false);
-  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
-
-  useEffect(() => {
-    if (!bannerConfig) {
-      setBannerVisible(false);
-      setWarningAcknowledged(true);
-      return;
-    }
-
-    const alreadySeen =
-      typeof window !== "undefined" &&
-      sessionStorage.getItem(bannerConfig.storageKey) === "true";
-
-    setWarningAcknowledged(alreadySeen);
-    setBannerVisible(false);
-  }, [bannerConfig]);
-
-  const handleFirstProtectedClick = (
-    e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>
-  ) => {
-    if (!bannerConfig) return;
-
-    if (!warningAcknowledged) {
-      e.preventDefault();
-      e.stopPropagation();
-      setBannerVisible(true);
-      setWarningAcknowledged(true);
-
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(bannerConfig.storageKey, "true");
-      }
-    }
-  };
+  function handleTitleClick() {
+    if (!bannerConfig.enabled) return;
+    setShowInfo((prev) => !prev);
+  }
 
   return (
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {bannerConfig?.position === "top" && bannerVisible && (
-          <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
-            {bannerConfig.message}
-          </div>
-        )}
+        {showInfo && bannerConfig.enabled && bannerConfig.position === "top" ? (
+          <InfoBanner content={bannerConfig.content} position="top" />
+        ) : null}
 
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-            {title}
-          </h3>
-
-          <Link
-            to={viewAllLink}
-            className="text-sm font-semibold text-blue-700 hover:underline"
+          <button
+            type="button"
+            onClick={handleTitleClick}
+            className="text-left"
+            aria-expanded={showInfo}
+            aria-label={`Vis information for ${title}`}
           >
-            Se alle
-          </Link>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 hover:text-primary transition-colors">
+              {title}
+            </h3>
+          </button>
+
+          {viewAllLink ? (
+            <Link
+              to={viewAllLink}
+              className="text-primary font-semibold hover:text-primary/80 transition-colors"
+            >
+              Se alle
+            </Link>
+          ) : null}
         </div>
 
         <div
           className="flex gap-4 overflow-x-auto pb-2 no-scrollbar"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {products.map((p) => {
-            const target =
-              p.href ??
-              (normalizedTitle === "populære tjenester"
-                ? `/tjenester/${p.slug ?? p.id}`
-                : `/kob/${p.slug ?? p.id}`);
+          {products.map((product) => (
+            <article
+              key={product.id}
+              className="w-64 flex-shrink-0 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            >
+              {product.image ? (
+                <div className="aspect-square bg-gray-100">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-square bg-gray-100" />
+              )}
 
-            return (
-              <div
-                key={p.id}
-                className="min-w-[240px] max-w-[240px] rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition bg-white"
-              >
-                <Link
-                  to={target}
-                  onClick={handleFirstProtectedClick}
-                  onTouchStart={handleFirstProtectedClick}
-                  className="block"
-                >
-                  <div className="h-40 bg-gray-100">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
+              <div className="p-4">
+                {product.category ? (
+                  <p className="text-sm text-gray-500 mb-1">{product.category}</p>
+                ) : null}
 
-                  <div className="p-4">
-                    <div className="text-xs text-gray-500">{p.category}</div>
+                <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h4>
 
-                    <div className="font-semibold text-gray-900 mt-1">
-                      {p.name}
-                    </div>
-
-                    <div className="text-gray-700 mt-2">{p.price} kr</div>
-
-                    <span className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-orange-500 text-white py-2 font-semibold hover:bg-blue-700 transition">
-                      Se detaljer
-                    </span>
-                  </div>
-                </Link>
+                {typeof product.price === "number" ? (
+                  <p className="text-primary font-bold">{product.price} kr</p>
+                ) : null}
               </div>
-            );
-          })}
+            </article>
+          ))}
         </div>
 
-        {bannerConfig?.position === "bottom" && bannerVisible && (
-          <div className="mt-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
-            {bannerConfig.message}
-          </div>
-        )}
+        {showInfo && bannerConfig.enabled && bannerConfig.position === "bottom" ? (
+          <InfoBanner content={bannerConfig.content} position="bottom" />
+        ) : null}
       </div>
     </section>
   );
