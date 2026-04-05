@@ -7,6 +7,8 @@ import {
   useParams,
 } from "react-router-dom";
 
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 import { RequireAuth } from "./components/requireauth";
 import { CartProvider } from "./cart/cart.store";
 
@@ -27,6 +29,16 @@ import JuridiskInfo from "./pages/JuridiskInfo";
 import ServiceCategory from "./pages/ServiceCategory";
 import NotFound from "./pages/NotFound";
 
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <Header />
+      {children}
+      <Footer />
+    </>
+  );
+}
+
 function ProductRedirect() {
   const { productSlug } = useParams();
   return <Navigate to={`/kob?q=${encodeURIComponent(productSlug ?? "")}`} replace />;
@@ -38,22 +50,34 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/kob" element={<Kob />} />
-          <Route path="/køb" element={<Kob />} />
+          <Route path="/køb" element={<Navigate to="/kob" replace />} />
           <Route path="/produkt/:productSlug" element={<ProductRedirect />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/log-pa" element={<Login />} />
+
+          <Route
+            path="/login"
+            element={
+              <AppLayout>
+                <Login />
+              </AppLayout>
+            }
+          />
+          <Route path="/log-pa" element={<Navigate to="/login" replace />} />
+
           <Route
             path="/join"
             element={
               <RequireAuth>
-                <JoinTenant />
+                <AppLayout>
+                  <JoinTenant />
+                </AppLayout>
               </RequireAuth>
             }
           />
+
           <Route
             path="/konto/*"
             element={
@@ -62,6 +86,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           <Route path="/om-os" element={<OmOs />} />
           <Route path="/kontakt" element={<Kontakt />} />
           <Route path="/tjenester" element={<Tjenester />} />
@@ -70,7 +95,14 @@ export default function App() {
           <Route path="/arbejdsgalleri" element={<Arbejdsgalleri />} />
           <Route path="/info" element={<Info />} />
           <Route path="/juridisk" element={<JuridiskInfo />} />
-          <Route path="*" element={<NotFound />} />
+          <Route
+            path="*"
+            element={
+              <AppLayout>
+                <NotFound />
+              </AppLayout>
+            }
+          />
         </Routes>
       </Router>
     </CartProvider>
