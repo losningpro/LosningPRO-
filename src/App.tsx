@@ -7,13 +7,12 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import { RequireAuth } from "./components/requireauth";
 import { CartProvider } from "./cart/cart.store";
 
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import Login from "./pages/login";
 import Konto from "./pages/konto";
 import OmOs from "./pages/OmOs";
@@ -28,16 +27,6 @@ import JuridiskInfo from "./pages/JuridiskInfo";
 import ServiceCategory from "./pages/ServiceCategory";
 import NotFound from "./pages/NotFound";
 
-function PublicLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Header />
-      {children}
-      <Footer />
-    </>
-  );
-}
-
 function ProductRedirect() {
   const { productSlug } = useParams();
   return <Navigate to={`/kob?q=${encodeURIComponent(productSlug ?? "")}`} replace />;
@@ -48,89 +37,23 @@ export default function App() {
     <CartProvider>
       <Router>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <PublicLayout>
-                <Home />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/home"
-            element={
-              <PublicLayout>
-                <Home />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/cart"
-            element={
-              <PublicLayout>
-                <Cart />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/kob"
-            element={
-              <PublicLayout>
-                <Kob />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/køb"
-            element={
-              <PublicLayout>
-                <Kob />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/produkt/:productSlug"
-            element={
-              <PublicLayout>
-                <ProductRedirect />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/login"
-            element={
-              <PublicLayout>
-                <Login />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/log-pa"
-            element={
-              <PublicLayout>
-                <Login />
-              </PublicLayout>
-            }
-          />
-
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/kob" element={<Kob />} />
+          <Route path="/køb" element={<Kob />} />
+          <Route path="/produkt/:productSlug" element={<ProductRedirect />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/log-pa" element={<Login />} />
           <Route
             path="/join"
             element={
               <RequireAuth>
-                <PublicLayout>
-                  <JoinTenant />
-                </PublicLayout>
+                <JoinTenant />
               </RequireAuth>
             }
           />
-
           <Route
             path="/konto/*"
             element={
@@ -139,79 +62,14 @@ export default function App() {
               </RequireAuth>
             }
           />
-
-          <Route
-            path="/om-os"
-            element={
-              <PublicLayout>
-                <OmOs />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/kontakt"
-            element={
-              <PublicLayout>
-                <Kontakt />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/tjenester"
-            element={
-              <PublicLayout>
-                <Tjenester />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/tjenester/:serviceSlug"
-            element={
-              <PublicLayout>
-                <ServiceCategory />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/hvordan-fungerer"
-            element={
-              <PublicLayout>
-                <HvordanFungerer />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/arbejdsgalleri"
-            element={
-              <PublicLayout>
-                <Arbejdsgalleri />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/info"
-            element={
-              <PublicLayout>
-                <Info />
-              </PublicLayout>
-            }
-          />
-
-          <Route
-            path="/juridisk"
-            element={
-              <PublicLayout>
-                <JuridiskInfo />
-              </PublicLayout>
-            }
-          />
-
+          <Route path="/om-os" element={<OmOs />} />
+          <Route path="/kontakt" element={<Kontakt />} />
+          <Route path="/tjenester" element={<Tjenester />} />
+          <Route path="/tjenester/:serviceSlug" element={<ServiceCategory />} />
+          <Route path="/hvordan-fungerer" element={<HvordanFungerer />} />
+          <Route path="/arbejdsgalleri" element={<Arbejdsgalleri />} />
+          <Route path="/info" element={<Info />} />
+          <Route path="/juridisk" element={<JuridiskInfo />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
