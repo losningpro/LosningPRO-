@@ -1,23 +1,36 @@
 import React, { useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { dashboardHomeForRole } from "../lib/roles";
+import { useProfile } from "../hooks/useProfile";
+
+function sanitizeRedirect(value: string | null | undefined, fallback: string) {
+  if (!value) return fallback;
+
+  const normalized = value.trim();
+
+  if (!normalized.startsWith("/")) return fallback;
+  if (normalized.startsWith("//")) return fallback;
+  if (normalized.includes("://")) return fallback;
+
+  return normalized;
+}
 
 export default function Login() {
   const nav = useNavigate();
   const location = useLocation();
+  const { profile } = useProfile();
 
-  const redirectTo = useMemo(() => {
-    const state = location.state as { from?: { pathname?: string } } | null;
-    return state?.from?.pathname?.startsWith("/konto")
-      ? state.from.pathname
-      : "/konto";
-  }, [location.state]);
+  const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const safeRedirect = useMemo(() => {
+    const fallback = dashboardHomeForRole(profile?.role);
+    return sanitizeRedirect(params.get("redirect"), fallback);
+  }, [params, profile?.role]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [mode, setMode] = useState<"login" | "reset">("login");
 
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -25,74 +38,33 @@ export default function Login() {
     setMsg(null);
 
     try {
-      const cleanEmail = email.trim().toLowerCase();
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         setMsg(error.message);
         return;
       }
 
-      if (!data.session?.user) {
-        setMsg("No se pudo iniciar sesión correctamente.");
-        return;
-      }
-
-      nav(redirectTo, { replace: true });
-    } catch (err) {
-      setMsg(err instanceof Error ? err.message : "Error inesperado al iniciar sesión.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function onResetPassword(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setMsg(null);
-
-    try {
-      const cleanEmail = email.trim().toLowerCase();
-
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
-
-      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-        redirectTo: `${origin}/login`,
-      });
-
-      if (error) {
-        setMsg(error.message);
-        return;
-      }
-
-      setMsg("Te hemos enviado un correo para restablecer la contraseña.");
-    } catch (err) {
-      setMsg(
-        err instanceof Error
-          ? err.message
-          : "Error inesperado al solicitar el restablecimiento."
-      );
+      nav(safeRedirect || "/konto", { replace: true });
+    } catch (error) {
+      console.error(error);
+      setMsg("Der opstod en fejl under login. Prøv igen.");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-2">Log på</h1>
-      <p className="text-sm text-slate-600 mb-6">
-        Acceso restringido. Las cuentas nuevas deben ser creadas desde el panel por un administrador.
-      </p>
+    <div className="mx-auto max-w-md p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 className="mb-2 text-2xl font-bold">Log på administration</h1>
+        <p className="mb-6 text-sm text-slate-600">
+          Sikker adgang til dashboard, produkter, ordrer og dokumenter.
+        </p>
 
-      {mode === "login" ? (
         <form onSubmit={onLogin} className="space-y-3">
           <input
-            className="w-full border rounded p-2"
+            className="w-full rounded border p-2"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -100,10 +72,9 @@ export default function Login() {
             autoComplete="email"
             required
           />
-
           <input
-            className="w-full border rounded p-2"
-            placeholder="Password"
+            className="w-full rounded border p-2"
+            placeholder="Adgangskode"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             type="password"
@@ -111,71 +82,22 @@ export default function Login() {
             required
           />
 
-          {msg && (
-            <div className="text-sm rounded border border-slate-200 bg-slate-50 p-3">
-              {msg}
-            </div>
-          )}
+          {msg && <div className="text-sm text-red-600">{msg}</div>}
 
           <button
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white rounded p-2 disabled:opacity-60"
+            className="w-full rounded bg-blue-600 p-2 text-white disabled:opacity-60"
             type="submit"
           >
-            {isLoading ? "..." : "Iniciar sesión"}
-          </button>
-
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => {
-              setMsg(null);
-              setMode("reset");
-            }}
-            className="w-full border rounded p-2"
-          >
-            He olvidado mi contraseña
+            {isLoading ? "Logger ind..." : "Log ind"}
           </button>
         </form>
-      ) : (
-        <form onSubmit={onResetPassword} className="space-y-3">
-          <input
-            className="w-full border rounded p-2"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            autoComplete="email"
-            required
-          />
 
-          {msg && (
-            <div className="text-sm rounded border border-slate-200 bg-slate-50 p-3">
-              {msg}
-            </div>
-          )}
-
-          <button
-            disabled={isLoading}
-            className="w-full bg-blue-600 text-white rounded p-2 disabled:opacity-60"
-            type="submit"
-          >
-            {isLoading ? "..." : "Enviar enlace de recuperación"}
-          </button>
-
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => {
-              setMsg(null);
-              setMode("login");
-            }}
-            className="w-full border rounded p-2"
-          >
-            Volver al login
-          </button>
-        </form>
-      )}
+        <div className="mt-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+          Oprettelse af brugere skal ske via invitation eller admin-panel. Åben signup er
+          fjernet for at understøtte roller og sikker adgang.
+        </div>
+      </div>
     </div>
   );
 }
