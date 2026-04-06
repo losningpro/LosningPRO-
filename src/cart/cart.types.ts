@@ -1,3 +1,5 @@
+export type CartItemKind = "service" | "product";
+
 export type CartItem = {
   id: string;
   name: string;
@@ -5,4 +7,7 @@ export type CartItem = {
   quantity: number;
   image?: string;
   stripePriceId?: string;
+  kind: CartItemKind;
+  category?: string;
+  relatedIds?: string[];
 };
