@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
@@ -22,26 +23,11 @@ function SeoSchema() {
       addressLocality: 'Glostrup',
       addressCountry: 'DK',
     },
-    areaServed: [
-      'Glostrup',
-      'København',
-      'Albertslund',
-      'Brøndby',
-      'Ballerup',
-      'Brøndbyvester',
-      'Storkøbenhavn',
-    ],
-    sameAs: [
-      'https://www.trustpilot.com/review/losningpro.dk',
-      'https://www.instagram.com/danieldanielsen.gi',
-      'https://www.facebook.com/share/1C7Sf2mnP5/',
-    ],
   };
 
   return (
     <script
       type="application/ld+json"
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
     />
   );
@@ -49,7 +35,6 @@ function SeoSchema() {
 
 export default function Home() {
   const products = useMarketStore(state => state.products);
-  
   const popularMaterials = products.filter(p => p.category === 'Material' && p.popular);
   const popularServices = products.filter(p => (p.category === 'El-Service' || p.category === 'VVS-Service' || p.category === 'Tømrer') && p.popular);
 
@@ -60,53 +45,57 @@ export default function Home() {
 
       <main>
         <HeroSection />
-
-        {/* ✅ SOLO UN blue banner */}
         <BlueFeatureBar />
 
-        {/* Marketplace: 2 carruseles filtrados de la BD */}
+        <section className="bg-slate-950 py-14 text-white">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.25fr_0.75fr] lg:px-8">
+            <div>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-300">Ny home-konvertering</p>
+              <h2 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+                Book en fagperson til virksomheder fra 350 kr./time
+              </h2>
+              <p className="mt-4 max-w-2xl text-slate-300">
+                Målrettet elektriker, VVS og håndværker-booking med et enkelt flow:
+                vælg ydelse, tilføj til kurv, reservér tid og betal.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/kob"
+                  className="inline-flex items-center justify-center rounded-xl bg-blue-500 px-6 py-3 font-semibold text-white transition hover:opacity-90"
+                >
+                  Book et medarbejder
+                </Link>
+                <Link
+                  to="/tjenester"
+                  className="inline-flex items-center justify-center rounded-xl border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/5"
+                >
+                  Se tjenester
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+              <h3 className="text-xl font-semibold">For virksomheder</h3>
+              <ul className="mt-4 space-y-3 text-sm text-slate-300">
+                <li>• Hurtig booking af medarbejder på timebasis</li>
+                <li>• Service i checkout med dato og tidspunkt</li>
+                <li>• Klar til multi-tenant dashboard og ordrer</li>
+                <li>• Designet til høj konvertering på mobil og desktop</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <ProductSlider title="Populære Materialer" products={popularMaterials} viewAllLink="/kob" />
         <ProductSlider title="Populære Tjenester" products={popularServices} viewAllLink="/tjenester" />
-
         <HowItWorks />
 
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Om LøsningPRO</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
-              Vi er din lokale partner for alle el- og VVS-opgaver i Glostrup og omegn. Med over 10 års erfaring leverer
-              vi kvalitetsarbejde til både private og erhvervskunder.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">150+</div>
-                <div className="text-gray-600">Tilfredse kunder</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">24/7</div>
-                <div className="text-gray-600">Akutservice</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">10+</div>
-                <div className="text-gray-600">Års erfaring</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="py-16 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">Arbejdsgalleri</h2>
-            <p className="text-lg text-gray-600 mb-8">Se eksempler på vores arbejde</p>
-            <div className="text-center">
-              <p className="text-gray-500 mb-4">Coming soon</p>
-              <p className="text-sm text-gray-400">Tilføjes senere</p>
-            </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ContactForm />
           </div>
         </section>
-
-        <ContactForm />
       </main>
 
       <Footer />
