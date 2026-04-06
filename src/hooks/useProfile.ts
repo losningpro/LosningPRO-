@@ -1,53 +1,55 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useSession } from "./useSession";
-import type { User, UserRole } from "../types/domain";
-import { ROLES } from "../lib/roles";
 
-export type DashboardRole = UserRole;
+export type DashboardRole =
+  | "master"
+  | "tenant"
+  | "medarbejder"
+  | "samarbejder"
+  | "partner"
+  | "kunde";
 
-export type UserProfile = User & {
+export type UserProfile = {
+  user_id: string;
+  email: string | null;
+  tenant_id: string | null;
+  role: DashboardRole;
   is_platform_admin: boolean;
   rawUserRow?: Record<string, unknown> | null;
 };
-
-function normalizeRole(value: unknown): UserRole {
-  const lower = String(value ?? "").toLowerCase().trim();
-
-  if (["master_admin", "master", "platform_admin", "admin"].includes(lower)) {
-    return ROLES.MASTER_ADMIN;
-  }
-
-  if (["tenant_admin", "tenant", "owner"].includes(lower)) {
-    return ROLES.TENANT_ADMIN;
-  }
-
-  if (["staff", "employee", "medarbejder", "partner", "samarbejder"].includes(lower)) {
-    return ROLES.STAFF;
-  }
-
-  return ROLES.VIEWER;
-}
 
 function normalizeProfile(
   row: Record<string, unknown> | null,
   authUser: { id: string; email?: string | null }
 ): UserProfile {
-  const role = normalizeRole(
-    row?.role ?? row?.user_role ?? row?.type ?? row?.account_type
-  );
+  const lowerRole = String(
+    row?.role ?? row?.user_role ?? row?.type ?? row?.account_type ?? ""
+  )
+    .toLowerCase()
+    .trim();
+
+  const isAdmin =
+    row?.is_platform_admin === true ||
+    row?.is_master === true ||
+    lowerRole === "master" ||
+    lowerRole === "admin";
+
+  let role: DashboardRole = "kunde";
+
+  if (isAdmin) role = "master";
+  else if (lowerRole.includes("tenant")) role = "tenant";
+  else if (lowerRole.includes("medarbejder") || lowerRole.includes("employee")) role = "medarbejder";
+  else if (lowerRole.includes("samarbejder")) role = "samarbejder";
+  else if (lowerRole.includes("partner")) role = "partner";
+  else if (lowerRole.includes("kunde") || lowerRole.includes("customer")) role = "kunde";
 
   return {
-    id: String(row?.id ?? row?.user_id ?? authUser.id),
+    user_id: String(row?.user_id ?? row?.id ?? authUser.id),
     email: authUser.email ?? (typeof row?.email === "string" ? row.email : null),
-    role,
     tenant_id: typeof row?.tenant_id === "string" ? row.tenant_id : null,
-    status:
-      typeof row?.status === "string"
-        ? (row.status as User["status"])
-        : "active",
-    created_at: typeof row?.created_at === "string" ? row.created_at : null,
-    is_platform_admin: role === ROLES.MASTER_ADMIN,
+    role,
+    is_platform_admin: isAdmin,
     rawUserRow: row,
   };
 }
@@ -70,28 +72,44 @@ export function useProfile() {
       }
 
       setLoading(true);
-      const authUser = { id: session.user.id, email: session.user.email ?? null };
 
-      const queries = [
-        supabase.from("user").select("*").eq("id", authUser.id).maybeSingle(),
-        authUser.email
-          ? supabase.from("user").select("*").eq("email", authUser.email).maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-        supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
-      ];
+      const authUser = {
+        id: session.user.id,
+        email: session.user.email ?? null,
+      };
 
-      const results = await Promise.allSettled(queries);
-      const firstMatch = results
-        .filter((r): r is PromiseFulfilledResult<{ data: unknown; error: unknown }> => r.status === "fulfilled")
-        .map((r) => r.value)
-        .find((entry) => !entry.error && entry.data);
+      try {
+        const queries = [
+          supabase.from("user").select("*").eq("id", authUser.id).maybeSingle(),
+          authUser.email
+            ? supabase.from("user").select("*").eq("email", authUser.email).maybeSingle()
+            : Promise.resolve({ data: null, error: null }),
+          supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
+        ];
 
-      const row = (firstMatch?.data ?? null) as Record<string, unknown> | null;
-      const normalized = normalizeProfile(row, authUser);
+        const results = await Promise.allSettled(queries);
+        const firstMatch = results
+          .filter(
+            (r): r is PromiseFulfilledResult<{ data: unknown; error: unknown }> =>
+              r.status === "fulfilled"
+          )
+          .map((r) => r.value)
+          .find((entry) => !entry.error && entry.data);
 
-      if (!cancelled) {
-        setProfile(normalized);
-        setLoading(false);
+        const row = (firstMatch?.data ?? null) as Record<string, unknown> | null;
+
+        if (!cancelled) {
+          setProfile(normalizeProfile(row, authUser));
+        }
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) {
+          setProfile(normalizeProfile(null, authUser));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
