@@ -11,7 +11,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
-    return <Navigate to="/log-pa" state={{ from: loc.pathname }} replace />;
+    const redirectTo = encodeURIComponent(loc.pathname + loc.search);
+    return <Navigate to={`/login?redirect=${redirectTo}`} replace />;
   }
 
   return <>{children}</>;
