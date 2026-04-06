@@ -1,272 +1,317 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { CreditCard, Lock } from 'lucide-react';
-import { toast } from 'react-toastify';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { CalendarDays, CreditCard, Lock } from "lucide-react";
+import { toast } from "react-toastify";
+import { useCart } from "../cart/cart.store";
+import { orderService } from "../services/orderService";
+import { bookingService } from "../services/bookingService";
+import { useSession } from "../hooks/useSession";
 
 const checkoutSchema = z.object({
-  email: z.string().email('Ugyldig email adresse'),
-  firstName: z.string().min(2, 'Fornavn skal være mindst 2 tegn'),
-  lastName: z.string().min(2, 'Efternavn skal være mindst 2 tegn'),
-  phone: z.string().min(8, 'Telefonnummer skal være mindst 8 cifre'),
-  address: z.string().min(5, 'Adresse skal være mindst 5 tegn'),
-  city: z.string().min(2, 'By skal være mindst 2 tegn'),
-  postalCode: z.string().min(4, 'Postnummer skal være mindst 4 cifre'),
-  acceptTerms: z.boolean().refine(val => val === true, 'Du skal acceptere handelsbetingelserne')
+  email: z.string().email("Ugyldig email adresse"),
+  firstName: z.string().min(2, "Fornavn skal være mindst 2 tegn"),
+  lastName: z.string().min(2, "Efternavn skal være mindst 2 tegn"),
+  phone: z.string().min(8, "Telefonnummer skal være mindst 8 cifre"),
+  address: z.string().min(5, "Adresse skal være mindst 5 tegn"),
+  city: z.string().min(2, "By skal være mindst 2 tegn"),
+  postalCode: z.string().min(4, "Postnummer skal være mindst 4 cifre"),
+  bookingDate: z.string().optional(),
+  bookingTime: z.string().optional(),
+  acceptTerms: z.boolean().refine((val) => val === true, "Du skal acceptere handelsbetingelserne"),
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export default function Checkout() {
+  const { items, subtotalDkk, containsService, clear } = useCart();
+  const { session } = useSession();
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<CheckoutFormData>({
-    resolver: zodResolver(checkoutSchema)
+    resolver: zodResolver(
+      checkoutSchema.superRefine((values, ctx) => {
+        if (containsService && !values.bookingDate) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["bookingDate"],
+            message: "Vælg dato for service",
+          });
+        }
+        if (containsService && !values.bookingTime) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["bookingTime"],
+            message: "Vælg tidspunkt for service",
+          });
+        }
+      })
+    ),
+    defaultValues: {
+      email: session?.user.email ?? "",
+    },
   });
 
-  // Mock cart data
-  const cartItems = [
-    {
-      id: '1',
-      name: 'LED Pære E27 9W Varm Hvid',
-      price: 89,
-      quantity: 2
-    },
-    {
-      id: '2',
-      name: 'El-installation',
-      price: 850,
-      quantity: 1
-    }
-  ];
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.25;
-  const total = subtotal + tax;
+  const moms = subtotalDkk * 0.25;
+  const total = subtotalDkk + moms;
 
   const onSubmit = async (data: CheckoutFormData) => {
     try {
-      // Simulate Stripe checkout session creation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('Checkout data:', data);
-      toast.success('Omdirigerer til betaling...');
-      
-      // In real app, redirect to Stripe checkout
-      // window.location.href = stripeCheckoutUrl;
+      if (items.length === 0) {
+        toast.error("Din kurv er tom.");
+        return;
+      }
+
+      const order = await orderService.create({
+        user_id: session?.user.id ?? null,
+        total_dkk: total,
+        status: "pending_payment",
+        lines: items.map((item) => ({
+          product_id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          unit_price_dkk: item.priceDkk,
+          kind: item.kind,
+        })),
+      });
+
+      const orderId =
+        order && typeof order === "object" && "id" in order && typeof order.id === "string"
+          ? order.id
+          : null;
+
+      if (containsService && data.bookingDate && data.bookingTime) {
+        const startsAt = new Date(`${data.bookingDate}T${data.bookingTime}:00`);
+
+        if (Number.isNaN(startsAt.getTime())) {
+          toast.error("Ugyldig bookingdato eller tidspunkt.");
+          return;
+        }
+
+        await bookingService.create({
+          user_id: session?.user.id ?? null,
+          order_id: orderId,
+          starts_at: startsAt.toISOString(),
+          notes: `${data.firstName} ${data.lastName} · ${data.phone}`,
+        });
+      }
+
+      toast.success("Ordre oprettet. Stripe/Pepper checkout kan nu forbindes til ordre-id.");
+      clear();
     } catch (error) {
-      toast.error('Der opstod en fejl. Prøv igen senere.');
+      console.error(error);
+      toast.error("Der opstod en fejl. Prøv igen senere.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="mb-8 text-3xl font-bold text-gray-900">Checkout</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Checkout Form */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Leveringsoplysninger</h2>
-            
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h2 className="mb-6 text-xl font-semibold text-gray-900">Kundeoplysninger</h2>
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
                   Email *
                 </label>
                 <input
-                  {...register('email')}
+                  {...register("email")}
                   type="email"
                   id="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3"
                   placeholder="din@email.dk"
                 />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                )}
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-gray-700">
                     Fornavn *
                   </label>
                   <input
-                    {...register('firstName')}
-                    type="text"
+                    {...register("firstName")}
                     id="firstName"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Dit fornavn"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3"
                   />
-                  {errors.firstName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-                  )}
+                  {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>}
                 </div>
-
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-gray-700">
                     Efternavn *
                   </label>
                   <input
-                    {...register('lastName')}
-                    type="text"
+                    {...register("lastName")}
                     id="lastName"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Dit efternavn"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3"
                   />
-                  {errors.lastName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-                  )}
+                  {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>}
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefon *
-                </label>
-                <input
-                  {...register('phone')}
-                  type="tel"
-                  id="phone"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="12345678"
-                />
-                {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                  Adresse *
-                </label>
-                <input
-                  {...register('address')}
-                  type="text"
-                  id="address"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Din adresse"
-                />
-                {errors.address && (
-                  <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="phone" className="mb-2 block text-sm font-medium text-gray-700">
+                    Telefon *
+                  </label>
+                  <input
+                    {...register("phone")}
+                    id="phone"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3"
+                  />
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="postalCode" className="mb-2 block text-sm font-medium text-gray-700">
                     Postnummer *
                   </label>
                   <input
-                    {...register('postalCode')}
-                    type="text"
+                    {...register("postalCode")}
                     id="postalCode"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="2600"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3"
                   />
-                  {errors.postalCode && (
-                    <p className="mt-1 text-sm text-red-600">{errors.postalCode.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                    By *
-                  </label>
-                  <input
-                    {...register('city')}
-                    type="text"
-                    id="city"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Glostrup"
-                  />
-                  {errors.city && (
-                    <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
-                  )}
+                  {errors.postalCode && <p className="mt-1 text-sm text-red-600">{errors.postalCode.message}</p>}
                 </div>
               </div>
 
-              <div className="flex items-start space-x-3">
-                <input
-                  {...register('acceptTerms')}
-                  type="checkbox"
-                  id="acceptTerms"
-                  className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <label htmlFor="acceptTerms" className="text-sm text-gray-700">
-                  Jeg accepterer{' '}
-                  <a href="https://info.losningpro.dk/handelsbetingelser" className="text-primary hover:text-primary/80">
-                    handelsbetingelserne
-                  </a>{' '}
-                  og{' '}
-                  <a href="https://info.losningpro.dk/privatlivspolitik" className="text-primary hover:text-primary/80">
-                    privatlivspolitikken
-                  </a>
+              <div>
+                <label htmlFor="address" className="mb-2 block text-sm font-medium text-gray-700">
+                  Adresse *
                 </label>
+                <input
+                  {...register("address")}
+                  id="address"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3"
+                />
+                {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>}
               </div>
-              {errors.acceptTerms && (
-                <p className="text-sm text-red-600">{errors.acceptTerms.message}</p>
+
+              <div>
+                <label htmlFor="city" className="mb-2 block text-sm font-medium text-gray-700">
+                  By *
+                </label>
+                <input
+                  {...register("city")}
+                  id="city"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3"
+                />
+                {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>}
+              </div>
+
+              {containsService && (
+                <section className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                  <div className="mb-4 flex items-center gap-2 font-semibold text-blue-900">
+                    <CalendarDays className="h-4 w-4" />
+                    Reservér dato og tidspunkt
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="bookingDate" className="mb-2 block text-sm font-medium text-gray-700">
+                        Dato *
+                      </label>
+                      <input
+                        {...register("bookingDate")}
+                        type="date"
+                        id="bookingDate"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3"
+                      />
+                      {errors.bookingDate && <p className="mt-1 text-sm text-red-600">{errors.bookingDate.message}</p>}
+                    </div>
+                    <div>
+                      <label htmlFor="bookingTime" className="mb-2 block text-sm font-medium text-gray-700">
+                        Tidspunkt *
+                      </label>
+                      <input
+                        {...register("bookingTime")}
+                        type="time"
+                        id="bookingTime"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3"
+                      />
+                      {errors.bookingTime && <p className="mt-1 text-sm text-red-600">{errors.bookingTime.message}</p>}
+                    </div>
+                  </div>
+                </section>
               )}
+
+              <label className="flex items-start gap-3">
+                <input {...register("acceptTerms")} type="checkbox" className="mt-1" />
+                <span className="text-sm text-gray-700">
+                  Jeg accepterer handelsbetingelserne og behandling af bookingdata.
+                </span>
+              </label>
+              {errors.acceptTerms && <p className="text-sm text-red-600">{errors.acceptTerms.message}</p>}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary text-white py-4 px-6 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-4 font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
               >
-                {isSubmitting ? (
-                  <span>Behandler...</span>
-                ) : (
-                  <>
-                    <CreditCard className="h-5 w-5" />
-                    <span>Fortsæt til betaling</span>
-                  </>
-                )}
+                <Lock className="h-5 w-5" />
+                {isSubmitting ? "Behandler..." : "Opret ordre og fortsæt til betaling"}
               </button>
 
-              <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-                <Lock className="h-4 w-4" />
-                <span>Sikker betaling via Stripe</span>
-              </div>
+              <p className="text-xs text-gray-500">
+                Stripe til direkte betaling og Pepper til afbetaling kan kobles på næste trin via ordre-id.
+              </p>
             </form>
           </div>
 
-          {/* Order Summary */}
-          <div className="bg-white rounded-lg shadow-sm p-6 h-fit sticky top-24">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Din ordre</h2>
-            
-            <div className="space-y-4 mb-6">
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{item.name}</h3>
-                    <p className="text-sm text-gray-600">Antal: {item.quantity}</p>
+          <div className="space-y-6">
+            <div className="rounded-lg bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Ordreoversigt</h2>
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="flex justify-between gap-4 border-b border-gray-100 pb-3">
+                    <div>
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {item.quantity} × {item.priceDkk} kr
+                      </p>
+                    </div>
+                    <p className="font-semibold text-gray-900">
+                      {item.quantity * item.priceDkk} kr
+                    </p>
                   </div>
-                  <span className="font-semibold text-gray-900">{item.price * item.quantity} kr</span>
+                ))}
+              </div>
+
+              <div className="mt-4 space-y-2 border-t border-gray-200 pt-4">
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span>{subtotalDkk.toFixed(2)} kr</span>
                 </div>
-              ))}
+                <div className="flex justify-between text-gray-600">
+                  <span>Moms</span>
+                  <span>{moms.toFixed(2)} kr</span>
+                </div>
+                <div className="flex justify-between text-lg font-semibold text-gray-900">
+                  <span>Total</span>
+                  <span>{total.toFixed(2)} kr</span>
+                </div>
+              </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">{subtotal} kr</span>
+            <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+              <div className="mb-2 flex items-center gap-2 font-semibold text-green-900">
+                <CreditCard className="h-5 w-5" />
+                Betalingsarkitektur klar
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Moms (25%)</span>
-                <span className="font-semibold">{tax.toFixed(0)} kr</span>
-              </div>
-              <div className="border-t border-gray-200 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-lg font-semibold text-primary">{total.toFixed(0)} kr</span>
-                </div>
-              </div>
+              <p className="text-sm text-green-800">
+                Denne checkout opretter nu ordre og booking først, så Stripe Checkout og Pepper
+                kan forbindes korrekt uden at bryde flowet mellem kurv, reservation og betaling.
+              </p>
             </div>
           </div>
         </div>
