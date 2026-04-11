@@ -1,12 +1,27 @@
 import React, { FormEvent, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
+const PROD_ORIGIN = "https://www.losningpro.dk";
+const LOCAL_ORIGIN = "http://localhost:5173";
 const DASHBOARD_PATH = "/konto";
 const RESET_PASSWORD_PATH = "/reset-password";
 
+function getAppOrigin() {
+  if (typeof window === "undefined") {
+    return PROD_ORIGIN;
+  }
+
+  const { hostname, origin } = window.location;
+
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return LOCAL_ORIGIN;
+  }
+
+  return PROD_ORIGIN;
+}
+
 function getRedirectTo(path: string) {
-  if (typeof window === "undefined") return undefined;
-  return `${window.location.origin}${path}`;
+  return `${getAppOrigin()}${path}`;
 }
 
 export default function LoginPage() {
@@ -43,7 +58,7 @@ export default function LoginPage() {
         throw signInError;
       }
 
-      window.location.assign(DASHBOARD_PATH);
+      window.location.assign(getRedirectTo(DASHBOARD_PATH));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Log ind mislykkedes.");
     } finally {
@@ -56,10 +71,13 @@ export default function LoginPage() {
     setOauthLoading(provider);
 
     try {
+      const redirectTo = getRedirectTo(DASHBOARD_PATH);
+
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: getRedirectTo(DASHBOARD_PATH),
+          redirectTo,
+          skipBrowserRedirect: false,
         },
       });
 
