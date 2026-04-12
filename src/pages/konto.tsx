@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  NavLink,
-  Navigate,
-  Route,
-  Routes,
-  useNavigate,
-} from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   ClipboardList,
@@ -22,9 +16,12 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
-import { useProfile, type DashboardRole } from "../hooks/useProfile";
+import { useProfile } from "../hooks/useProfile";
 import { useSession } from "../hooks/useSession";
-import { normalizeDashboardRole } from "../modules/access-control";
+import {
+  normalizeDashboardRole,
+  type DashboardRole,
+} from "../modules/access-control";
 
 type ModuleKey =
   | "oversigt"
@@ -209,6 +206,7 @@ function DashboardShell({
           <nav className="space-y-2">
             {visibleModules.map((module) => {
               const to = module.path ? `/konto/${module.path}` : "/konto";
+
               return (
                 <NavLink
                   key={module.key}
@@ -351,10 +349,7 @@ function CalendarModule() {
 
   return (
     <div className="space-y-6">
-      <SectionCard
-        title="Kalender for aftaler"
-        description="Bookinger, tider og status."
-      >
+      <SectionCard title="Kalender for aftaler" description="Bookinger, tider og status.">
         {error ? (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
