@@ -8,17 +8,6 @@ export type AppRole =
   | "viewer"
   | "guest";
 
-export type DashboardModule =
-  | "overview"
-  | "calendar"
-  | "orders"
-  | "gallery"
-  | "products"
-  | "users"
-  | "tenant_settings"
-  | "finance"
-  | "leads";
-
 type ProfileLike = {
   email?: string | null;
   role?: string | null;
@@ -42,56 +31,8 @@ export function normalizeDashboardRole(profile: ProfileLike | null | undefined):
     role === "kunde" ||
     role === "viewer"
   ) {
-    return role as AppRole;
+    return role;
   }
 
   return "guest";
-}
-
-export function getAllowedDashboardModules(role: AppRole): DashboardModule[] {
-  switch (role) {
-    case "master":
-      return [
-        "overview",
-        "calendar",
-        "orders",
-        "gallery",
-        "products",
-        "users",
-        "tenant_settings",
-        "finance",
-        "leads",
-      ];
-
-    case "tenant":
-      return [
-        "overview",
-        "calendar",
-        "orders",
-        "gallery",
-        "products",
-        "users",
-        "tenant_settings",
-        "finance",
-        "leads",
-      ];
-
-    case "medarbejder":
-      return ["overview", "calendar", "orders"];
-
-    case "samarbejder":
-      return ["overview", "calendar"];
-
-    case "partner":
-      return ["overview", "orders", "leads"];
-
-    case "kunde":
-      return ["overview", "calendar", "orders"];
-
-    case "viewer":
-      return ["overview"];
-
-    default:
-      return [];
-  }
 }
