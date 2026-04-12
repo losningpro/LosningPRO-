@@ -114,7 +114,7 @@ export default function ContactForm({
           <input
             value={form.fullName}
             onChange={(e) => updateField("fullName", e.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#26439a]"
             placeholder="Dit navn"
           />
         </div>
@@ -125,7 +125,7 @@ export default function ContactForm({
             type="email"
             value={form.email}
             onChange={(e) => updateField("email", e.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#26439a]"
             placeholder="navn@eksempel.dk"
           />
         </div>
@@ -135,7 +135,7 @@ export default function ContactForm({
           <input
             value={form.phoneNumber}
             onChange={(e) => updateField("phoneNumber", e.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#26439a]"
             placeholder="+45 12 34 56 78"
           />
         </div>
@@ -145,7 +145,7 @@ export default function ContactForm({
           <input
             value={form.city}
             onChange={(e) => updateField("city", e.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#26439a]"
             placeholder="København"
           />
         </div>
@@ -155,7 +155,7 @@ export default function ContactForm({
           <input
             value={form.subject}
             onChange={(e) => updateField("subject", e.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#26439a]"
             placeholder="Hvad drejer det sig om?"
           />
         </div>
@@ -165,7 +165,7 @@ export default function ContactForm({
           <textarea
             value={form.message}
             onChange={(e) => updateField("message", e.target.value)}
-            className="min-h-[140px] w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+            className="min-h-[140px] w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#26439a]"
             placeholder="Beskriv din opgave eller dit spørgsmål"
           />
         </div>
@@ -188,7 +188,7 @@ export default function ContactForm({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-2xl bg-[#26439a] px-6 py-3 text-sm font-medium text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Sender..." : "Send besked"}
           </button>
