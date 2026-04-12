@@ -7,16 +7,9 @@ const DASHBOARD_PATH = "/konto";
 const RESET_PASSWORD_PATH = "/reset-password";
 
 function getAppOrigin() {
-  if (typeof window === "undefined") {
-    return PROD_ORIGIN;
-  }
-
-  const { hostname, origin } = window.location;
-
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return LOCAL_ORIGIN;
-  }
-
+  if (typeof window === "undefined") return PROD_ORIGIN;
+  const { hostname } = window.location;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return LOCAL_ORIGIN;
   return PROD_ORIGIN;
 }
 
@@ -30,6 +23,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<"google" | "facebook" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [oauthUrl, setOauthUrl] = useState<string | null>(null);
 
   const isBusy = useMemo(() => submitting || oauthLoading !== null, [submitting, oauthLoading]);
 
@@ -41,22 +35,15 @@ export default function LoginPage() {
     try {
       const normalizedEmail = email.trim().toLowerCase();
 
-      if (!normalizedEmail) {
-        throw new Error("Indtast din e-mail.");
-      }
-
-      if (!password) {
-        throw new Error("Indtast din adgangskode.");
-      }
+      if (!normalizedEmail) throw new Error("Indtast din e-mail.");
+      if (!password) throw new Error("Indtast din adgangskode.");
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
       });
 
-      if (signInError) {
-        throw signInError;
-      }
+      if (signInError) throw signInError;
 
       window.location.assign(getRedirectTo(DASHBOARD_PATH));
     } catch (err) {
@@ -68,24 +55,27 @@ export default function LoginPage() {
 
   async function handleOAuthLogin(provider: "google" | "facebook") {
     setError(null);
+    setOauthUrl(null);
     setOauthLoading(provider);
 
     try {
       const redirectTo = getRedirectTo(DASHBOARD_PATH);
 
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
-          skipBrowserRedirect: false,
+          skipBrowserRedirect: true,
         },
       });
 
-      if (oauthError) {
-        throw oauthError;
-      }
+      if (oauthError) throw oauthError;
+      if (!data?.url) throw new Error("Ingen OAuth URL modtaget fra Supabase.");
+
+      setOauthUrl(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Social login mislykkedes.");
+    } finally {
       setOauthLoading(null);
     }
   }
@@ -105,6 +95,32 @@ export default function LoginPage() {
             </div>
           ) : null}
 
+          {oauthUrl ? (
+            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+              <div className="mb-2 font-medium">OAuth URL generada</div>
+              <textarea
+                readOnly
+                value={oauthUrl}
+                className="min-h-[140px] w-full rounded-lg border border-blue-200 bg-white p-2 text-xs"
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(oauthUrl)}
+                  className="rounded-lg border border-blue-300 px-3 py-2 text-sm"
+                >
+                  Copiar URL
+                </button>
+                <a
+                  href={oauthUrl}
+                  className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white"
+                >
+                  Abrir OAuth
+                </a>
+              </div>
+            </div>
+          ) : null}
+
           <div className="mt-6 space-y-3">
             <button
               type="button"
@@ -112,7 +128,7 @@ export default function LoginPage() {
               disabled={isBusy}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {oauthLoading === "google" ? "Åbner Google..." : "Fortsæt med Google"}
+              {oauthLoading === "google" ? "Preparando Google..." : "Fortsæt med Google"}
             </button>
 
             <button
@@ -121,7 +137,7 @@ export default function LoginPage() {
               disabled={isBusy}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {oauthLoading === "facebook" ? "Åbner Facebook..." : "Fortsæt med Facebook"}
+              {oauthLoading === "facebook" ? "Preparando Facebook..." : "Fortsæt med Facebook"}
             </button>
           </div>
 
@@ -154,7 +170,6 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Adgangskode
                 </label>
-
                 <a
                   href={RESET_PASSWORD_PATH}
                   className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-black"
