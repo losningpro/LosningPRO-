@@ -10,115 +10,61 @@ export type DashboardRole =
   | "partner"
   | "kunde";
 
-export type UserProfile = {
-  user_id: string;
+type ProfileRow = {
+  id: string;
   email: string | null;
-  tenant_id: string | null;
-  role: DashboardRole;
-  is_platform_admin: boolean;
-  rawUserRow?: Record<string, unknown> | null;
+  role: DashboardRole | null;
+  status?: string | null;
+  is_platform_admin?: boolean | null;
+  tenant_id_uuid?: string | null;
 };
 
-function normalizeProfile(
-  row: Record<string, unknown> | null,
-  authUser: { id: string; email?: string | null }
-): UserProfile {
-  const lowerRole = String(
-    row?.role ?? row?.user_role ?? row?.type ?? row?.account_type ?? ""
-  )
-    .toLowerCase()
-    .trim();
-
-  const isAdmin =
-    row?.is_platform_admin === true ||
-    row?.is_master === true ||
-    lowerRole === "master" ||
-    lowerRole === "admin";
-
-  let role: DashboardRole = "kunde";
-
-  if (isAdmin) role = "master";
-  else if (lowerRole.includes("tenant")) role = "tenant";
-  else if (lowerRole.includes("medarbejder") || lowerRole.includes("employee")) role = "medarbejder";
-  else if (lowerRole.includes("samarbejder")) role = "samarbejder";
-  else if (lowerRole.includes("partner")) role = "partner";
-  else if (lowerRole.includes("kunde") || lowerRole.includes("customer")) role = "kunde";
-
-  return {
-    user_id: String(row?.user_id ?? row?.id ?? authUser.id),
-    email: authUser.email ?? (typeof row?.email === "string" ? row.email : null),
-    tenant_id: typeof row?.tenant_id === "string" ? row.tenant_id : null,
-    role,
-    is_platform_admin: isAdmin,
-    rawUserRow: row,
-  };
-}
-
 export function useProfile() {
-  const { session, loading: sessionLoading } = useSession();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { session } = useSession();
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
+    let active = true;
 
-    async function run() {
-      if (sessionLoading) return;
-
-      if (!session?.user) {
-        setProfile(null);
-        setLoading(false);
+    async function load() {
+      if (!session?.user?.email) {
+        if (active) {
+          setProfile(null);
+          setLoading(false);
+        }
         return;
       }
 
       setLoading(true);
 
-      const authUser = {
-        id: session.user.id,
-        email: session.user.email ?? null,
-      };
+      const { data, error } = await supabase
+        .from("user")
+        .select("id,email,role,status,is_platform_admin,tenant_id_uuid")
+        .or(
+          `auth_user_id.eq.${session.user.id},email.ilike.${session.user.email}`
+        )
+        .limit(1)
+        .maybeSingle();
 
-      try {
-        const queries = [
-          supabase.from("user").select("*").eq("id", authUser.id).maybeSingle(),
-          authUser.email
-            ? supabase.from("user").select("*").eq("email", authUser.email).maybeSingle()
-            : Promise.resolve({ data: null, error: null }),
-          supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle(),
-        ];
+      if (!active) return;
 
-        const results = await Promise.allSettled(queries);
-        const firstMatch = results
-          .filter(
-            (r): r is PromiseFulfilledResult<{ data: unknown; error: unknown }> =>
-              r.status === "fulfilled"
-          )
-          .map((r) => r.value)
-          .find((entry) => !entry.error && entry.data);
-
-        const row = (firstMatch?.data ?? null) as Record<string, unknown> | null;
-
-        if (!cancelled) {
-          setProfile(normalizeProfile(row, authUser));
-        }
-      } catch (error) {
-        console.error(error);
-        if (!cancelled) {
-          setProfile(normalizeProfile(null, authUser));
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      if (error) {
+        setProfile(null);
+        setLoading(false);
+        return;
       }
+
+      setProfile((data as ProfileRow | null) ?? null);
+      setLoading(false);
     }
 
-    void run();
+    void load();
 
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [session, sessionLoading]);
+  }, [session?.user?.id, session?.user?.email]);
 
   return { profile, loading };
 }
