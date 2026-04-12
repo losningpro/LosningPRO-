@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function HomeBusinessPage() {
   return (
@@ -19,19 +20,26 @@ export default function HomeBusinessPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="/kob"
+              <Link
+                to="/kob"
                 className="rounded-2xl bg-slate-900 px-6 py-4 text-center text-sm font-medium text-white hover:bg-black"
               >
                 Book et medarbejder
-              </a>
+              </Link>
 
-              <a
-                href="/kontakt"
+              <Link
+                to="/book-video-call"
+                className="rounded-2xl border border-slate-300 px-6 py-4 text-center text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                Book gratis videokald
+              </Link>
+
+              <Link
+                to="/kontakt"
                 className="rounded-2xl border border-slate-300 px-6 py-4 text-center text-sm font-medium text-slate-800 hover:bg-slate-50"
               >
                 Få rådgivning først
-              </a>
+              </Link>
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -39,10 +47,12 @@ export default function HomeBusinessPage() {
                 <div className="text-2xl font-semibold text-slate-900">350+</div>
                 <div className="mt-1 text-sm text-slate-600">kr./time fra</div>
               </div>
+
               <div className="rounded-2xl border border-slate-200 p-4">
                 <div className="text-2xl font-semibold text-slate-900">B2B</div>
                 <div className="mt-1 text-sm text-slate-600">tilpasset drift og service</div>
               </div>
+
               <div className="rounded-2xl border border-slate-200 p-4">
                 <div className="text-2xl font-semibold text-slate-900">Hurtigt</div>
                 <div className="mt-1 text-sm text-slate-600">fra forespørgsel til booking</div>
@@ -52,6 +62,7 @@ export default function HomeBusinessPage() {
 
           <div className="rounded-[32px] border border-slate-200 bg-slate-50 p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Sådan fungerer det</h2>
+
             <div className="mt-6 space-y-4">
               <div className="rounded-2xl bg-white p-4">
                 <div className="text-sm font-semibold text-slate-900">1. Vælg service</div>
@@ -63,7 +74,7 @@ export default function HomeBusinessPage() {
               <div className="rounded-2xl bg-white p-4">
                 <div className="text-sm font-semibold text-slate-900">2. Book tidspunkt</div>
                 <p className="mt-1 text-sm text-slate-600">
-                  Vælg tidspunkt eller kontakt os for koordinering.
+                  Vælg tidspunkt eller book først et gratis video- eller telefonmøde.
                 </p>
               </div>
 
@@ -73,6 +84,15 @@ export default function HomeBusinessPage() {
                   Ordre og booking samles i dashboard og videre flow.
                 </p>
               </div>
+            </div>
+
+            <div className="mt-6">
+              <Link
+                to="/book-video-call"
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-sm font-medium text-white hover:bg-sky-700"
+              >
+                Book gratis videokald
+              </Link>
             </div>
           </div>
         </div>
