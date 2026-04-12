@@ -31,7 +31,7 @@ type LeadInsert = {
 
 type ContactEventInsert = {
   tenant_id: string | null;
-  lead_id: string;
+  lead_id?: string | null;
   channel: "form";
   page_key: string;
   metadata: Record<string, unknown>;
@@ -66,21 +66,23 @@ export async function submitContactLead(payload: ContactPayload) {
     },
   };
 
+  let leadId: string | null = null;
+
   const { data: lead, error: leadError } = await supabase
     .from("leads")
     .insert(leadInsert)
     .select("id")
     .single();
 
-  if (leadError || !lead?.id) {
-    throw leadError ?? new Error("No se pudo crear el lead.");
+  if (!leadError && lead?.id) {
+    leadId = lead.id;
   }
 
   const eventInsert: ContactEventInsert = {
     tenant_id: payload.tenantId ?? null,
-    lead_id: lead.id,
+    lead_id: leadId,
     channel: "form",
-    page_key: "kontakt",
+    page_key: payload.source ?? "kontakt",
     metadata: {
       source: payload.source ?? "contact_form",
       page_url: payload.pageUrl ?? null,
@@ -95,5 +97,30 @@ export async function submitContactLead(payload: ContactPayload) {
     throw eventError;
   }
 
-  return { leadId: lead.id };
+  const { error: functionError } = await supabase.functions.invoke(
+    "send-contact-notification",
+    {
+      body: {
+        leadId,
+        fullName: payload.fullName,
+        email: payload.email,
+        phoneNumber: payload.phoneNumber ?? null,
+        city: payload.city ?? null,
+        subject: payload.subject ?? null,
+        message: payload.message,
+        source: payload.source ?? "contact_form",
+        pageUrl: payload.pageUrl ?? null,
+      },
+    }
+  );
+
+  if (functionError) {
+    console.warn("No se pudo enviar la notificación por email:", functionError.message);
+  }
+
+  if (leadError) {
+    throw leadError;
+  }
+
+  return { leadId };
 }
