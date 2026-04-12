@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useSession } from "./useSession";
-
-export type DashboardRole =
-  | "master"
-  | "tenant"
-  | "medarbejder"
-  | "samarbejder"
-  | "partner"
-  | "kunde";
+import type { DashboardRole } from "../modules/access-control";
 
 export type ProfileRow = {
   id: string;
@@ -29,9 +22,7 @@ export function useProfile() {
     let active = true;
 
     async function load() {
-      if (sessionLoading) {
-        return;
-      }
+      if (sessionLoading) return;
 
       if (!session?.user) {
         if (active) {
@@ -44,19 +35,16 @@ export function useProfile() {
       setLoading(true);
 
       const userId = session.user.id;
-      const userEmail = session.user.email?.toLowerCase() ?? "";
+      const userEmail = session.user.email?.trim().toLowerCase() ?? "";
 
       const { data, error } = await supabase
         .from("user")
-        .select("id, auth_user_id, email, role, status, is_platform_admin, tenant_id_uuid")
+        .select("id, auth_user_id, email, role, status, is_platform_admin, tenant_id_uuid, created_at")
         .or(`auth_user_id.eq.${userId},email.ilike.${userEmail}`)
         .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .limit(10);
 
-      if (!active) {
-        return;
-      }
+      if (!active) return;
 
       if (error) {
         console.error("useProfile error:", error);
@@ -65,7 +53,8 @@ export function useProfile() {
         return;
       }
 
-      setProfile((data as ProfileRow | null) ?? null);
+      const first = (data?.[0] ?? null) as ProfileRow | null;
+      setProfile(first);
       setLoading(false);
     }
 
