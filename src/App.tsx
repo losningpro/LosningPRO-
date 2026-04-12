@@ -9,7 +9,7 @@ import {
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { RequireAuth } from "./components/requireauth";
+import RequireAuth from "./components/requireauth";
 import { CartProvider } from "./cart/cart.store";
 
 import Home from "./pages/Home";
