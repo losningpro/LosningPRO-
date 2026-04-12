@@ -4,7 +4,6 @@ import {
   Navigate,
   Route,
   Routes,
-  useLocation,
   useNavigate,
 } from "react-router-dom";
 import {
@@ -25,6 +24,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { useProfile, type DashboardRole } from "../hooks/useProfile";
 import { useSession } from "../hooks/useSession";
+import { normalizeDashboardRole } from "../modules/access-control";
 
 type ModuleKey =
   | "oversigt"
@@ -48,6 +48,18 @@ type ModuleConfig = {
   icon: React.ReactNode;
   roles: DashboardRole[];
   description: string;
+};
+
+type GenericRow = Record<string, unknown>;
+
+type BookingRow = {
+  id: string;
+  start_time: string | null;
+  end_time: string | null;
+  status: string | null;
+  product_slug?: string | null;
+  user_id?: string | null;
+  assigned_to?: string | null;
 };
 
 const ALL_ROLES: DashboardRole[] = [
@@ -183,13 +195,13 @@ function DashboardShell({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] min-h-screen">
-        <aside className="bg-slate-900 text-white p-4 lg:p-6">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
+        <aside className="bg-slate-900 p-4 text-white lg:p-6">
           <div className="mb-8">
             <div className="text-xl font-bold">LøsningPRO</div>
-            <div className="text-sm text-slate-300 mt-1">Dashboard</div>
-            <div className="text-xs text-slate-400 mt-3 break-all">{email}</div>
-            <div className="inline-flex mt-3 rounded-full bg-slate-800 px-3 py-1 text-xs uppercase tracking-wide">
+            <div className="mt-1 text-sm text-slate-300">Dashboard</div>
+            <div className="mt-3 break-all text-xs text-slate-400">{email}</div>
+            <div className="mt-3 inline-flex rounded-full bg-slate-800 px-3 py-1 text-xs uppercase tracking-wide">
               Rolle: {role}
             </div>
           </div>
@@ -205,7 +217,7 @@ function DashboardShell({
                   className={({ isActive }) =>
                     `flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
                       isActive
-                        ? "bg-white text-slate-900 font-semibold"
+                        ? "bg-white font-semibold text-slate-900"
                         : "text-slate-200 hover:bg-slate-800"
                     }`
                   }
@@ -220,7 +232,7 @@ function DashboardShell({
           <div className="mt-8 border-t border-slate-800 pt-6">
             <button
               onClick={() => void onLogout()}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700"
             >
               <LogOut className="h-4 w-4" />
               Log ud
@@ -244,10 +256,10 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl bg-white border border-slate-200 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-100 px-5 py-4">
         <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
-        {description ? <p className="text-sm text-slate-500 mt-1">{description}</p> : null}
+        {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
       </div>
       <div className="p-5">{children}</div>
     </section>
@@ -256,7 +268,7 @@ function SectionCard({
 
 function StatBox({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="text-sm text-slate-500">{label}</div>
       <div className="mt-2 text-2xl font-bold text-slate-900">{value}</div>
     </div>
@@ -270,9 +282,12 @@ function OverviewPage({ role }: { role: DashboardRole }) {
         title="Oversigt"
         description="Dette dashboard samler dine moduler i én sikker backoffice-løsning."
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatBox label="Aktiv rolle" value={role} />
-          <StatBox label="Dashboard-moduler" value={MODULES.filter((m) => m.roles.includes(role)).length} />
+          <StatBox
+            label="Dashboard-moduler"
+            value={MODULES.filter((m) => m.roles.includes(role)).length}
+          />
           <StatBox label="Status" value="Klar" />
           <StatBox label="Miljø" value="Vite + Supabase" />
         </div>
@@ -295,6 +310,120 @@ function OverviewPage({ role }: { role: DashboardRole }) {
   );
 }
 
+function CalendarModule() {
+  const [rows, setRows] = useState<BookingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("id,start_time,end_time,status,product_slug,user_id,assigned_to")
+      .order("start_time", { ascending: true })
+      .limit(100);
+
+    if (error) {
+      setRows([]);
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setRows((data ?? []) as BookingRow[]);
+    setLoading(false);
+  }
+
+  async function updateStatus(id: string, status: string) {
+    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    await load();
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <SectionCard
+        title="Kalender for aftaler"
+        description="Bookinger, tider og status."
+      >
+        {error ? (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="mb-5">
+          <button
+            onClick={() => void load()}
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
+          >
+            Opdater
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {loading ? (
+            <div className="text-sm text-slate-500">Indlæser...</div>
+          ) : rows.length === 0 ? (
+            <div className="text-sm text-slate-500">Ingen bookinger endnu.</div>
+          ) : (
+            rows.map((row) => (
+              <div
+                key={row.id}
+                className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-200 p-4 lg:grid-cols-[1.1fr_1fr_220px]"
+              >
+                <div>
+                  <div className="font-semibold text-slate-900">
+                    Booking #{row.id.slice(0, 8)}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    Service: {row.product_slug || "Ikke angivet"}
+                  </div>
+                </div>
+
+                <div className="text-sm text-slate-700">
+                  <div>
+                    <span className="font-medium">Start:</span>{" "}
+                    {row.start_time ? new Date(row.start_time).toLocaleString() : "-"}
+                  </div>
+                  <div className="mt-1">
+                    <span className="font-medium">Slut:</span>{" "}
+                    {row.end_time ? new Date(row.end_time).toLocaleString() : "-"}
+                  </div>
+                </div>
+
+                <div>
+                  <select
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                    value={row.status ?? "pending"}
+                    onChange={(e) => void updateStatus(row.id, e.target.value)}
+                  >
+                    <option value="pending">pending</option>
+                    <option value="confirmed">confirmed</option>
+                    <option value="rescheduled">rescheduled</option>
+                    <option value="cancelled">cancelled</option>
+                    <option value="completed">completed</option>
+                    <option value="expired">expired</option>
+                  </select>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
 function GenericTableModule({
   title,
   description,
@@ -306,15 +435,19 @@ function GenericTableModule({
   table: string;
   emptyTemplate?: Record<string, unknown>;
 }) {
-  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const [rows, setRows] = useState<GenericRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editor, setEditor] = useState<string>(
-    JSON.stringify(emptyTemplate ?? {}, null, 2)
-  );
+  const [editor, setEditor] = useState<string>(JSON.stringify(emptyTemplate ?? {}, null, 2));
 
   async function load() {
+    if (!table) {
+      setRows([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -327,7 +460,7 @@ function GenericTableModule({
       return;
     }
 
-    setRows((data ?? []) as Record<string, unknown>[]);
+    setRows((data ?? []) as GenericRow[]);
     setLoading(false);
   }
 
@@ -336,11 +469,16 @@ function GenericTableModule({
   }, [table]);
 
   async function save() {
+    if (!table) {
+      setError("Ingen tabel er koblet til dette modul.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
     try {
-      const payload = JSON.parse(editor) as Record<string, unknown>;
+      const payload = JSON.parse(editor) as GenericRow;
 
       if (payload?.id) {
         const { error } = await supabase.from(table).update(payload).eq("id", payload.id as string);
@@ -359,7 +497,12 @@ function GenericTableModule({
     }
   }
 
-  async function removeRow(row: Record<string, unknown>) {
+  async function removeRow(row: GenericRow) {
+    if (!table) {
+      setError("Ingen tabel er koblet til dette modul.");
+      return;
+    }
+
     if (!row?.id || typeof row.id !== "string") {
       setError("Kan ikke slette en post uden id.");
       return;
@@ -396,7 +539,7 @@ function GenericTableModule({
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => void load()}
-            className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
           >
             Opdater
           </button>
@@ -413,11 +556,11 @@ function GenericTableModule({
             <thead>
               <tr className="border-b border-slate-200">
                 {columns.map((col) => (
-                  <th key={col} className="text-left py-3 pr-4 font-semibold text-slate-700">
+                  <th key={col} className="py-3 pr-4 text-left font-semibold text-slate-700">
                     {col}
                   </th>
                 ))}
-                <th className="text-left py-3 pr-4 font-semibold text-slate-700">Handlinger</th>
+                <th className="py-3 pr-4 text-left font-semibold text-slate-700">Handlinger</th>
               </tr>
             </thead>
             <tbody>
@@ -435,9 +578,12 @@ function GenericTableModule({
                 </tr>
               ) : (
                 rows.map((row, idx) => (
-                  <tr key={(row.id as string | undefined) ?? idx} className="border-b border-slate-100 align-top">
+                  <tr
+                    key={(row.id as string | undefined) ?? idx}
+                    className="border-b border-slate-100 align-top"
+                  >
                     {columns.map((col) => (
-                      <td key={col} className="py-3 pr-4 text-slate-700 max-w-[220px]">
+                      <td key={col} className="max-w-[220px] py-3 pr-4 text-slate-700">
                         <div className="line-clamp-3 break-words">
                           {typeof row[col] === "object"
                             ? JSON.stringify(row[col])
@@ -455,7 +601,7 @@ function GenericTableModule({
                         </button>
                         <button
                           onClick={() => void removeRow(row)}
-                          className="rounded-lg border border-red-300 text-red-700 px-3 py-1.5"
+                          className="rounded-lg border border-red-300 px-3 py-1.5 text-red-700"
                         >
                           Slet
                         </button>
@@ -474,7 +620,7 @@ function GenericTableModule({
         description="Bruges til hurtig oprettelse og redigering uden at bryde den eksisterende arkitektur."
       >
         <textarea
-          className="w-full min-h-[320px] rounded-xl border border-slate-300 p-4 font-mono text-sm"
+          className="min-h-[320px] w-full rounded-xl border border-slate-300 p-4 font-mono text-sm"
           value={editor}
           onChange={(e) => setEditor(e.target.value)}
         />
@@ -482,7 +628,7 @@ function GenericTableModule({
           <button
             onClick={() => void save()}
             disabled={saving}
-            className="rounded-xl bg-blue-600 text-white px-5 py-2.5 text-sm disabled:opacity-60"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm text-white disabled:opacity-60"
           >
             {saving ? "Gemmer..." : "Gem post"}
           </button>
@@ -519,7 +665,7 @@ function SettingsPage({
         <div className="mt-5">
           <button
             onClick={() => void onLogout()}
-            className="rounded-xl bg-slate-900 text-white px-5 py-2.5 text-sm"
+            className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white"
           >
             Log ud
           </button>
@@ -542,9 +688,13 @@ function AccessDenied() {
 function RoleProtectedModule({
   role,
   module,
+  email,
+  onLogout,
 }: {
   role: DashboardRole;
   module: ModuleConfig;
+  email: string;
+  onLogout: () => Promise<void>;
 }) {
   if (!module.roles.includes(role)) {
     return <AccessDenied />;
@@ -554,8 +704,12 @@ function RoleProtectedModule({
     return <OverviewPage role={role} />;
   }
 
+  if (module.key === "kalender") {
+    return <CalendarModule />;
+  }
+
   if (module.key === "settings") {
-    return <div className="text-sm text-slate-500">Settings requires wrapper props.</div>;
+    return <SettingsPage email={email} role={role} onLogout={onLogout} />;
   }
 
   const defaultTemplates: Record<string, Record<string, unknown>> = {
@@ -576,62 +730,85 @@ function RoleProtectedModule({
       slug: "",
       description: "",
       price_dkk: 0,
-      visible: true,
+      is_active: true,
+      product_type: "service",
     },
     galleri: {
       title: "",
-      image_url: "",
       description: "",
-      visible: true,
+      before_image_url: "",
+      after_image_url: "",
+      comment: "",
+      display_order: 0,
+      is_published: false,
     },
     user: {
       email: "",
       role: "kunde",
-      tenant_id: null,
-      is_master: false,
+      tenant_id_uuid: null,
+      is_platform_admin: false,
+      status: "active",
     },
     tenants: {
       name: "",
-      slug: "",
-      active: true,
+      company_name: "",
+      status: "active",
+      default_language: "da",
     },
     subscriptions_contracts: {
-      title: "",
-      customer_email: "",
-      status: "draft",
+      plan_name: "",
+      contract_type: "",
+      currency_code: "DKK",
       notes: "",
     },
     finance_entries: {
       title: "",
       amount: 0,
-      kind: "expense",
+      entry_type: "expense",
+      currency_code: "DKK",
       notes: "",
     },
     docs: {
-      title: "",
-      content: "",
-      visible_to_role: "master",
+      file_name: "",
+      file_url: "",
+      file_type: "",
+      doc_type: "",
+      is_public: false,
     },
   };
+
+  if (!module.table) {
+    return (
+      <SectionCard title={module.label} description={module.description}>
+        <div className="text-sm text-slate-600">
+          Dette modul har endnu ingen direkte tabelkobling.
+        </div>
+      </SectionCard>
+    );
+  }
 
   return (
     <GenericTableModule
       title={module.label}
       description={module.description}
-      table={module.table ?? ""}
-      emptyTemplate={defaultTemplates[module.table ?? ""] ?? {}}
+      table={module.table}
+      emptyTemplate={defaultTemplates[module.table] ?? {}}
     />
   );
 }
 
 export default function Konto() {
   const nav = useNavigate();
-  const loc = useLocation();
   const { session, loading: sessionLoading } = useSession();
   const { profile, loading: profileLoading } = useProfile();
 
-  const role: DashboardRole = profile?.role ?? "kunde";
-  const email = session?.user?.email ?? "";
+  const role: DashboardRole = normalizeDashboardRole({
+    email: session?.user?.email ?? profile?.email ?? null,
+    role: profile?.role ?? null,
+    is_platform_admin: profile?.is_platform_admin ?? null,
+  }) as DashboardRole;
+
+  const email = session?.user?.email ?? profile?.email ?? "";
 
   async function onLogout() {
     await supabase.auth.signOut();
@@ -651,27 +828,22 @@ export default function Konto() {
   return (
     <DashboardShell role={role} email={email} onLogout={onLogout}>
       <Routes>
-        <Route path="/" element={<OverviewPage role={role} />} />
+        <Route index element={<OverviewPage role={role} />} />
 
-        {MODULES.filter((m) => m.path).map((module) => {
-          if (module.key === "settings") {
-            return (
-              <Route
-                key={module.key}
-                path={module.path}
-                element={<SettingsPage email={email} role={role} onLogout={onLogout} />}
+        {MODULES.filter((m) => m.path).map((module) => (
+          <Route
+            key={module.key}
+            path={module.path}
+            element={
+              <RoleProtectedModule
+                role={role}
+                module={module}
+                email={email}
+                onLogout={onLogout}
               />
-            );
-          }
-
-          return (
-            <Route
-              key={module.key}
-              path={module.path}
-              element={<RoleProtectedModule role={role} module={module} />}
-            />
-          );
-        })}
+            }
+          />
+        ))}
 
         <Route
           path="*"
@@ -687,10 +859,6 @@ export default function Konto() {
           }
         />
       </Routes>
-
-      {loc.pathname === "/konto" && visibleModules.length === 0 ? (
-        <div className="mt-4 text-sm text-slate-500">Ingen moduler tilgængelige for denne bruger.</div>
-      ) : null}
     </DashboardShell>
   );
 }
