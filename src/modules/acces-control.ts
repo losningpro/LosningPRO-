@@ -31,7 +31,7 @@ export function normalizeDashboardRole(profile: ProfileLike | null | undefined):
     role === "kunde" ||
     role === "viewer"
   ) {
-    return role;
+    return role as AppRole;
   }
 
   return "guest";
