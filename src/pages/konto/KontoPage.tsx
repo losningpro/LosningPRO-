@@ -1263,8 +1263,27 @@ setNotice(`Status opdateret til ${status}.`);
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {editorKeys.map((key) => {
-              const value = parsedEditor[key];
+            const selectOptions = getSelectOptionsForField(key);
+
+              if (selectOptions) {
+                return (
+                  <label key={key} className="block">
+                    <div className="mb-1 text-sm font-medium text-slate-700">{key}</div>
+                    <select
+                      value={String(value ?? "")}
+                      onChange={(e) => updateEditorField(key, e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm"
+                    >
+                    <option value="">Vælg...</option>
+                    {selectOptions.map((option) => (
+                    <option key={option} value={option}>
+                    {option}
+                  </option>
+                 ))}
+                  </select>
+                </label>
+                );
+              }
 
               if (typeof value === "boolean") {
                 return (
