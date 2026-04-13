@@ -10,7 +10,9 @@ export type ProfileRow = {
   role: DashboardRole | null;
   status?: string | null;
   is_platform_admin?: boolean | null;
+  tenant_id?: string | null;
   tenant_id_uuid?: string | null;
+  created_at?: string | null;
 };
 
 export function useProfile() {
@@ -39,7 +41,7 @@ export function useProfile() {
 
       const { data, error } = await supabase
         .from("user")
-        .select("id, auth_user_id, email, role, status, is_platform_admin, tenant_id_uuid, created_at")
+        .select("id, auth_user_id, email, role, status, is_platform_admin, tenant_id, tenant_id_uuid, created_at")
         .or(`auth_user_id.eq.${userId},email.ilike.${userEmail}`)
         .order("created_at", { ascending: true })
         .limit(10);
