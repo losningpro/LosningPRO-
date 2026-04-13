@@ -59,6 +59,27 @@ type BookingRow = {
   user_id?: string | null;
   assigned_to?: string | null;
 };
+
+type LeadRow = {
+  id: string;
+  slug?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  source?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  name?: string | null;
+  lastname?: string | null;
+  email?: string | null;
+  phone_number?: string | null;
+  city?: string | null;
+  coment?: string | null;
+  product?: string | null;
+  assigned_to?: string | null;
+  contacted_at?: string | null;
+  consent_accepted?: boolean | null;
+};
+
 const DEFAULT_TEMPLATES: Record<string, Record<string, unknown>> = {
   bookings: {
     product_slug: "",
