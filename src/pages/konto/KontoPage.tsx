@@ -58,6 +58,133 @@ type BookingRow = {
   user_id?: string | null;
   assigned_to?: string | null;
 };
+const DEFAULT_TEMPLATES: Record<string, Record<string, unknown>> = {
+  bookings: {
+    product_slug: "",
+    user_id: "",
+    assigned_to: null,
+    start_time: new Date().toISOString(),
+    end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    status: "pending",
+    notes: "",
+  },
+  orders: {
+    tenant_id: "",
+    user_id: "",
+    status: "pending",
+    total_amount: 0,
+    post_address: "",
+    post_code: "",
+    land: "DK",
+    slug: "",
+  },
+  products: {
+    tenant_id: "",
+    name: "",
+    slug: "",
+    category: "",
+    subcategory: "",
+    description: "",
+    price_dkk: 0,
+    stock: 0,
+    active: true,
+    is_active: true,
+    product_type: "service",
+    image_url_text: "",
+  },
+  galleri: {
+    customer_id: "",
+    image_url: "",
+    display_order: 0,
+    rating: 5,
+    coment: "",
+  },
+  user: {
+    auth_user_id: null,
+    tenant_id: null,
+    tenant_id_uuid: null,
+    email: "",
+    name: "",
+    lastname: "",
+    phone_number: "",
+    role: "kunde",
+    status: "active",
+    is_platform_admin: false,
+  },
+  tenants: {
+    email: "",
+    name: "",
+    lastname: "",
+    company_name: "",
+    post_address: "",
+    post_code: "",
+    city: "",
+    land: "DK",
+    phone_number: "",
+    role: "tenant",
+    status: "active",
+    default_language: "da",
+  },
+  subscriptions_contracts: {
+    tenant_id: "",
+    plan_name: "",
+    contract_type: "",
+    status: "active",
+    amount: 0,
+    currency_code: "DKK",
+    notes: "",
+  },
+  finance_entries: {
+    tenant_id: "",
+    title: "",
+    amount: 0,
+    entry_type: "expense",
+    currency_code: "DKK",
+    notes: "",
+  },
+  docs: {
+    tenant_id: "",
+    file_name: "",
+    file_url: "",
+    file_type: "",
+    doc_type: "",
+    is_public: false,
+  },
+};
+
+function normalizePrimitive(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+
+  if (trimmed === "") return null;
+  if (trimmed === "null") return null;
+  if (trimmed === "true") return true;
+  if (trimmed === "false") return false;
+
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    return Number(trimmed);
+  }
+
+  return trimmed;
+}
+
+function normalizePayload(input: unknown): unknown {
+  if (Array.isArray(input)) {
+    return input.map(normalizePayload);
+  }
+
+  if (input && typeof input === "object") {
+    const entries = Object.entries(input as Record<string, unknown>).map(([key, value]) => [
+      key,
+      normalizePayload(value),
+    ]);
+
+    return Object.fromEntries(entries);
+  }
+
+  return normalizePrimitive(input);
+}
 
 const ALL_ROLES: DashboardRole[] = [
   "master",
