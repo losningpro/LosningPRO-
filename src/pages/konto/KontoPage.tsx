@@ -875,6 +875,7 @@ setNotice("Post gemt.");
     }
 
     await load();
+setNotice("Post slettet.");
   }
 
   async function quickToggleActive(row: GenericRow) {
