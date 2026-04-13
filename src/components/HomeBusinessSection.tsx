@@ -1,75 +1,79 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { Mail, Phone, Video, MapPin } from "lucide-react";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import HeroSection from "../components/HeroSection";
+import BlueFeatureBar from "../components/BlueFeatureBar";
+import ProductSlider from "../components/ProductSlider";
+import HowItWorks from "../components/HowItWorks";
+import HomeBusinessSection from "../components/HomeBusinessSection";
+import { useMarketStore } from "../lib/store";
 
-type HomeBusinessSectionProps = {
-  compact?: boolean;
-};
+function SeoSchema() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "LøsningPRO",
+    url: "https://www.losningpro.dk",
+    telephone: "+45 52 71 78 10",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Baneleddet 39",
+      postalCode: "2600",
+      addressLocality: "Glostrup",
+      addressCountry: "DK",
+    },
+  };
 
-export default function HomeBusinessSection({
-  compact = false,
-}: HomeBusinessSectionProps) {
   return (
-    <section className={compact ? "bg-[#2f4ba3] py-16 md:py-20" : "bg-[#2f4ba3] py-20 md:py-24"}>
-      <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-        <h2 className="text-4xl font-bold tracking-tight text-white md:text-6xl">
-          Kontakt
-        </h2>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
 
-        <p className="mx-auto mt-6 max-w-3xl text-lg text-white/90 md:text-xl">
-          Har du spørgsmål? Brug vores formular, ring direkte, eller book et videokald.
-        </p>
+export default function Home() {
+  const products = useMarketStore((state) => state.products);
 
-        <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Link
-            to="/kontakt#kontaktformular"
-            className="rounded-[32px] border border-white/20 bg-white/10 p-8 text-center text-white backdrop-blur transition hover:bg-white/15"
-          >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500">
-              <Mail className="h-8 w-8 text-white" />
-            </div>
+  const popularMaterials = products.filter(
+    (p) => p.category === "Material" && p.popular,
+  );
 
-            <h3 className="mt-6 text-2xl font-semibold">Formular</h3>
+  const popularServices = products.filter(
+    (p) =>
+      (p.category === "El-Service" ||
+        p.category === "VVS-Service" ||
+        p.category === "Tømrer") &&
+      p.popular,
+  );
 
-            <p className="mt-4 text-sm leading-6 text-white/85">
-              Send os en besked om din opgave, så vender vi hurtigt tilbage.
-            </p>
-          </Link>
+  return (
+    <div className="min-h-screen bg-white">
+      <SeoSchema />
+      <Header />
 
-          <a
-            href="tel:+4552717810"
-            className="rounded-[32px] border border-white/20 bg-white/10 p-8 text-center text-white backdrop-blur transition hover:bg-white/15"
-          >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500">
-              <Phone className="h-8 w-8 text-white" />
-            </div>
+      <main>
+        <HeroSection />
+        <BlueFeatureBar />
 
-            <h3 className="mt-6 text-2xl font-semibold">Ring nu</h3>
+        <ProductSlider
+          title="Populære Materialer"
+          products={popularMaterials}
+          viewAllLink="/kob"
+        />
 
-            <p className="mt-4 text-base text-white/90">+45 52 71 78 10</p>
-          </a>
+        <ProductSlider
+          title="Populære Tjenester"
+          products={popularServices}
+          viewAllLink="/tjenester"
+        />
 
-          <Link
-            to="/book-video-call"
-            className="rounded-[32px] border border-white/20 bg-white/10 p-8 text-center text-white backdrop-blur transition hover:bg-white/15"
-          >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500">
-              <Video className="h-8 w-8 text-white" />
-            </div>
+        <HowItWorks />
 
-            <h3 className="mt-6 text-2xl font-semibold">Book videokald</h3>
+        <HomeBusinessSection compact />
+      </main>
 
-            <p className="mt-4 text-sm leading-6 text-white/85">
-              Gennemgå opgaven med os online og kom hurtigt videre.
-            </p>
-          </Link>
-        </div>
-
-        <div className="mt-10 flex items-center justify-center gap-2 text-sm text-white/85">
-          <MapPin className="h-4 w-4" />
-          <span>Service i hele Danmark</span>
-        </div>
-      </div>
-    </section>
+      <Footer />
+    </div>
   );
 }
