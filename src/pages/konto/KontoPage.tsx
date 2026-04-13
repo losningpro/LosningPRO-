@@ -805,7 +805,7 @@ function GenericTableModule({
   table: string;
   emptyTemplate?: Record<string, unknown>;
 }) {
-  const [rows, setRows] = useState<GenericRow[]>([]);
+const [rows, setRows] = useState<GenericRow[]>([]);
 const [loading, setLoading] = useState(true);
 const [saving, setSaving] = useState(false);
 const [error, setError] = useState<string | null>(null);
@@ -814,6 +814,9 @@ const [editor, setEditor] = useState<string>("{}");
 const [query, setQuery] = useState("");
 const [page, setPage] = useState(1);
 const [pageSize, setPageSize] = useState(10);
+const [autoRefresh, setAutoRefresh] = useState(false);
+const [refreshSeconds, setRefreshSeconds] = useState(15);
+const [realtimeEnabled, setRealtimeEnabled] = useState(true);
 
   useEffect(() => {
     setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
@@ -859,6 +862,42 @@ const [pageSize, setPageSize] = useState(10);
 
   return () => window.clearTimeout(timer);
 }, [notice]);
+
+  useEffect(() => {
+  if (!autoRefresh || !table) return;
+
+  const intervalMs = Math.max(5, refreshSeconds) * 1000;
+
+  const timer = window.setInterval(() => {
+    void load();
+  }, intervalMs);
+
+  useEffect(() => {
+  if (!realtimeEnabled || !table) return;
+
+  const channel = supabase
+    .channel(`realtime-${table}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table,
+      },
+      () => {
+        setNotice(`Live update i ${table}.`);
+        void load();
+      },
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}, [realtimeEnabled, table]);
+
+  return () => window.clearInterval(timer);
+}, [autoRefresh, refreshSeconds, table]);
 
   async function save() {
     if (!table) {
