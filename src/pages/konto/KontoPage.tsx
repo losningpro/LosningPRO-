@@ -434,7 +434,11 @@ function GenericTableModule({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editor, setEditor] = useState<string>(JSON.stringify(emptyTemplate ?? {}, null, 2));
+  const [editor, setEditor] = useState<string>("{}");
+
+  useEffect(() => {
+    setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
+  }, [table, emptyTemplate]);
 
   async function load() {
     if (!table) {
@@ -476,7 +480,11 @@ function GenericTableModule({
       const payload = JSON.parse(editor) as GenericRow;
 
       if (payload?.id) {
-        const { error } = await supabase.from(table).update(payload).eq("id", payload.id as string);
+        const { error } = await supabase
+          .from(table)
+          .update(payload)
+          .eq("id", payload.id as string);
+
         if (error) throw error;
       } else {
         const { error } = await supabase.from(table).insert(payload);
@@ -555,7 +563,9 @@ function GenericTableModule({
                     {col}
                   </th>
                 ))}
-                <th className="py-3 pr-4 text-left font-semibold text-slate-700">Handlinger</th>
+                <th className="py-3 pr-4 text-left font-semibold text-slate-700">
+                  Handlinger
+                </th>
               </tr>
             </thead>
             <tbody>
