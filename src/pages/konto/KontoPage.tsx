@@ -474,6 +474,53 @@ const LONG_TEXT_FIELDS = new Set([
   "certificates",
 ]);
 
+const SELECT_FIELD_OPTIONS: Record<string, string[]> = {
+  status: [
+    "pending",
+    "active",
+    "confirmed",
+    "completed",
+    "cancelled",
+    "inactive",
+    "draft",
+    "expired",
+    "paid",
+    "failed",
+  ],
+  role: [
+    "master",
+    "tenant",
+    "medarbejder",
+    "samarbejder",
+    "partner",
+    "kunde",
+  ],
+  entry_type: [
+    "expense",
+    "income",
+    "refund",
+  ],
+  product_type: [
+    "service",
+    "material",
+  ],
+  payment_status: [
+    "pending",
+    "paid",
+    "failed",
+    "refunded",
+  ],
+  default_language: [
+    "da",
+    "en",
+    "de",
+  ],
+};
+
+function getSelectOptionsForField(field: string): string[] | null {
+  return SELECT_FIELD_OPTIONS[field] ?? null;
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
