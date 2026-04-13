@@ -803,6 +803,16 @@ const [pageSize, setPageSize] = useState(10);
     setPage(1);
   }, [query, pageSize, table]);
 
+  useEffect(() => {
+  if (!notice) return;
+
+  const timer = window.setTimeout(() => {
+    setNotice(null);
+  }, 2500);
+
+  return () => window.clearTimeout(timer);
+}, [notice]);
+
   async function save() {
     if (!table) {
       setError("Ingen tabel er koblet til dette modul.");
