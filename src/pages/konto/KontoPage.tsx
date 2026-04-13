@@ -1119,12 +1119,16 @@ setNotice(`Status opdateret til ${status}.`);
                           </button>
 
                           {rowId ? (
-                            <button
-                              onClick={() => void copyTextToClipboard(rowId)}
-                              className="rounded-lg border border-slate-300 px-3 py-1.5"
-                            >
-                              Kopiér ID
-                            </button>
+                           <button
+                                onClick={() => {
+                                 void copyTextToClipboard(rowId);
+                                setNotice("ID kopieret.");
+                                }}
+                                className="rounded-lg border border-slate-300 px-3 py-1.5"
+                          >
+                            Kopiér ID
+                          </button>
+                      
                           ) : null}
 
                           {activationField ? (
