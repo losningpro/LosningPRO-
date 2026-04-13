@@ -491,6 +491,20 @@ function stringifyEditorObject(value: Record<string, unknown>): string {
   return JSON.stringify(value, null, 2);
 }
 
+function hasBooleanActivationField(row: GenericRow): "is_active" | "active" | null {
+  if (typeof row.is_active === "boolean") return "is_active";
+  if (typeof row.active === "boolean") return "active";
+  return null;
+}
+
+function hasStatusField(row: GenericRow): boolean {
+  return typeof row.status === "string" || row.status === null;
+}
+
+async function copyTextToClipboard(value: string): Promise<void> {
+  await navigator.clipboard.writeText(value);
+}
+
 function DashboardShell({
   children,
   role,
