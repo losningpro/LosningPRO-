@@ -1,16 +1,12 @@
 import React, { FormEvent, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-const PROD_ORIGIN = "https://www.losningpro.dk";
-const LOCAL_ORIGIN = "http://localhost:5173";
 const DASHBOARD_PATH = "/konto";
 const RESET_PASSWORD_PATH = "/reset-password";
 
 function getAppOrigin() {
-  if (typeof window === "undefined") return PROD_ORIGIN;
-  const { hostname } = window.location;
-  if (hostname === "localhost" || hostname === "127.0.0.1") return LOCAL_ORIGIN;
-  return PROD_ORIGIN;
+  if (typeof window === "undefined") return "https://www.losningpro.dk";
+  return window.location.origin;
 }
 
 function getRedirectTo(path: string) {
@@ -22,14 +18,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<"google" | "facebook" | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [oauthUrl, setOauthUrl] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const isBusy = useMemo(() => submitting || oauthLoading !== null, [submitting, oauthLoading]);
+  const isBusy = useMemo(
+    () => submitting || oauthLoading !== null || resetLoading,
+    [submitting, oauthLoading, resetLoading],
+  );
 
   async function handleEmailLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setMessage(null);
     setSubmitting(true);
 
     try {
@@ -55,28 +56,49 @@ export default function LoginPage() {
 
   async function handleOAuthLogin(provider: "google" | "facebook") {
     setError(null);
-    setOauthUrl(null);
+    setMessage(null);
     setOauthLoading(provider);
 
     try {
       const redirectTo = getRedirectTo(DASHBOARD_PATH);
 
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
-          skipBrowserRedirect: true,
         },
       });
 
       if (oauthError) throw oauthError;
-      if (!data?.url) throw new Error("Ingen OAuth URL modtaget fra Supabase.");
-
-      setOauthUrl(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Social login mislykkedes.");
-    } finally {
       setOauthLoading(null);
+    }
+  }
+
+  async function handleResetPassword() {
+    setError(null);
+    setMessage(null);
+    setResetLoading(true);
+
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (!normalizedEmail) {
+        throw new Error("Indtast din e-mail for at nulstille adgangskoden.");
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: getRedirectTo(RESET_PASSWORD_PATH),
+      });
+
+      if (error) throw error;
+
+      setMessage("Vi har sendt et link til nulstilling af adgangskode til din e-mail.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kunne ikke sende nulstillingsmail.");
+    } finally {
+      setResetLoading(false);
     }
   }
 
@@ -95,29 +117,9 @@ export default function LoginPage() {
             </div>
           ) : null}
 
-          {oauthUrl ? (
-            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-              <div className="mb-2 font-medium">OAuth URL generada</div>
-              <textarea
-                readOnly
-                value={oauthUrl}
-                className="min-h-[140px] w-full rounded-lg border border-blue-200 bg-white p-2 text-xs"
-              />
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard.writeText(oauthUrl)}
-                  className="rounded-lg border border-blue-300 px-3 py-2 text-sm"
-                >
-                  Copiar URL
-                </button>
-                <a
-                  href={oauthUrl}
-                  className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white"
-                >
-                  Abrir OAuth
-                </a>
-              </div>
+          {message ? (
+            <div className="mt-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              {message}
             </div>
           ) : null}
 
@@ -128,7 +130,7 @@ export default function LoginPage() {
               disabled={isBusy}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {oauthLoading === "google" ? "Preparando Google..." : "Fortsæt med Google"}
+              {oauthLoading === "google" ? "Forbinder til Google..." : "Fortsæt med Google"}
             </button>
 
             <button
@@ -137,7 +139,7 @@ export default function LoginPage() {
               disabled={isBusy}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {oauthLoading === "facebook" ? "Preparando Facebook..." : "Fortsæt med Facebook"}
+              {oauthLoading === "facebook" ? "Forbinder til Facebook..." : "Fortsæt med Facebook"}
             </button>
           </div>
 
@@ -148,55 +150,45 @@ export default function LoginPage() {
           </div>
 
           <form className="space-y-4" onSubmit={handleEmailLogin}>
-            <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-                E-mail
-              </label>
+            <label className="block">
+              <div className="mb-2 text-sm font-medium text-gray-700">E-mail</div>
               <input
-                id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="navn@eksempel.dk"
-                disabled={isBusy}
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-500"
               />
-            </div>
+            </label>
 
-            <div>
-              <div className="mb-1 flex items-center justify-between gap-3">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Adgangskode
-                </label>
-                <a
-                  href={RESET_PASSWORD_PATH}
-                  className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-black"
-                >
-                  Glemt adgangskode?
-                </a>
-              </div>
-
+            <label className="block">
+              <div className="mb-2 text-sm font-medium text-gray-700">Adgangskode</div>
               <input
-                id="password"
-                name="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-                disabled={isBusy}
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-900 disabled:cursor-not-allowed disabled:bg-gray-100"
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Din adgangskode"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-500"
               />
-            </div>
+            </label>
 
             <button
               type="submit"
               disabled={isBusy}
               className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "Logger ind..." : "Log ind med e-mail"}
+              {submitting ? "Logger ind..." : "Log ind"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleResetPassword()}
+              disabled={isBusy}
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {resetLoading ? "Sender..." : "Glemt adgangskode?"}
             </button>
           </form>
         </div>
