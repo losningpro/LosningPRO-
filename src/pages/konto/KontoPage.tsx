@@ -898,6 +898,7 @@ setNotice("Post slettet.");
     }
 
     await load();
+setNotice(row[field] ? "Post deaktiveret." : "Post aktiveret.");
   }
 
   async function quickSetStatus(row: GenericRow, status: string) {
@@ -918,7 +919,7 @@ setNotice("Post slettet.");
     }
 
     await load();
-setNotice(row[field] ? "Post deaktiveret." : "Post aktiveret.");
+setNotice(`Status opdateret til ${status}.`);
   }
 
   function resetEditor() {
