@@ -865,6 +865,48 @@ function GenericTableModule({
     await load();
   }
 
+  async function quickToggleActive(row: GenericRow) {
+    if (!table) return;
+    if (!row?.id || typeof row.id !== "string") return;
+
+    const field = hasBooleanActivationField(row);
+    if (!field) return;
+
+    setError(null);
+
+    const { error } = await supabase
+      .from(table)
+      .update({ [field]: !row[field] })
+      .eq("id", row.id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    await load();
+  }
+
+  async function quickSetStatus(row: GenericRow, status: string) {
+    if (!table) return;
+    if (!row?.id || typeof row.id !== "string") return;
+    if (!hasStatusField(row)) return;
+
+    setError(null);
+
+    const { error } = await supabase
+      .from(table)
+      .update({ status })
+      .eq("id", row.id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    await load();
+  }
+
   function resetEditor() {
     setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
     setError(null);
@@ -1009,56 +1051,132 @@ function GenericTableModule({
                   </td>
                 </tr>
               ) : (
-                paginatedRows.map((row, idx) => (
-                  <tr
-                    key={(row.id as string | undefined) ?? idx}
-                    className="border-b border-slate-100 align-top"
-                  >
-                    {columns.map((col) => (
-                      <td key={col} className="max-w-[220px] py-3 pr-4 text-slate-700">
-                        {isBadgeColumn(col) ? (
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getBadgeClass(
-                              String(row[col] ?? ""),
-                            )}`}
+                paginatedRows.map((row, idx) => {
+                  const activationField = hasBooleanActivationField(row);
+                  const currentStatus = String(row.status ?? "");
+                  const rowId =
+                    typeof row.id === "string"
+                      ? row.id
+                      : typeof row.id === "number"
+                        ? String(row.id)
+                        : "";
+
+                  return (
+                    <tr
+                      key={rowId || idx}
+                      className="border-b border-slate-100 align-top"
+                    >
+                      {columns.map((col) => (
+                        <td key={col} className="max-w-[220px] py-3 pr-4 text-slate-700">
+                          {isBadgeColumn(col) ? (
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getBadgeClass(
+                                String(row[col] ?? ""),
+                              )}`}
+                            >
+                              {String(row[col] ?? "") || "-"}
+                            </span>
+                          ) : (
+                            <div className="line-clamp-3 break-words">
+                              {typeof row[col] === "object"
+                                ? JSON.stringify(row[col])
+                                : String(row[col] ?? "")}
+                            </div>
+                          )}
+                        </td>
+                      ))}
+                      <td className="py-3 pr-4">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() =>
+                              setEditor(JSON.stringify(stripSystemFields(row), null, 2))
+                            }
+                            className="rounded-lg border border-slate-300 px-3 py-1.5"
                           >
-                            {String(row[col] ?? "") || "-"}
-                          </span>
-                        ) : (
-                          <div className="line-clamp-3 break-words">
-                            {typeof row[col] === "object"
-                              ? JSON.stringify(row[col])
-                              : String(row[col] ?? "")}
-                          </div>
-                        )}
+                            Redigér
+                          </button>
+
+                          <button
+                            onClick={duplicateCurrent}
+                            className="rounded-lg border border-slate-300 px-3 py-1.5"
+                          >
+                            Duplicér
+                          </button>
+
+                          {rowId ? (
+                            <button
+                              onClick={() => void copyTextToClipboard(rowId)}
+                              className="rounded-lg border border-slate-300 px-3 py-1.5"
+                            >
+                              Kopiér ID
+                            </button>
+                          ) : null}
+
+                          {activationField ? (
+                            <button
+                              onClick={() => void quickToggleActive(row)}
+                              className="rounded-lg border border-slate-300 px-3 py-1.5"
+                            >
+                              {row[activationField] ? "Deaktivér" : "Aktivér"}
+                            </button>
+                          ) : null}
+
+                          {hasStatusField(row) ? (
+                            <>
+                              {currentStatus !== "pending" ? (
+                                <button
+                                  onClick={() => void quickSetStatus(row, "pending")}
+                                  className="rounded-lg border border-slate-300 px-3 py-1.5"
+                                >
+                                  → pending
+                                </button>
+                              ) : null}
+                              {currentStatus !== "active" ? (
+                                <button
+                                  onClick={() => void quickSetStatus(row, "active")}
+                                  className="rounded-lg border border-slate-300 px-3 py-1.5"
+                                >
+                                  → active
+                                </button>
+                              ) : null}
+                              {currentStatus !== "confirmed" ? (
+                                <button
+                                  onClick={() => void quickSetStatus(row, "confirmed")}
+                                  className="rounded-lg border border-slate-300 px-3 py-1.5"
+                                >
+                                  → confirmed
+                                </button>
+                              ) : null}
+                              {currentStatus !== "completed" ? (
+                                <button
+                                  onClick={() => void quickSetStatus(row, "completed")}
+                                  className="rounded-lg border border-slate-300 px-3 py-1.5"
+                                >
+                                  → completed
+                                </button>
+                              ) : null}
+                              {currentStatus !== "cancelled" ? (
+                                <button
+                                  onClick={() => void quickSetStatus(row, "cancelled")}
+                                  className="rounded-lg border border-slate-300 px-3 py-1.5"
+                                >
+                                  → cancelled
+                                </button>
+                              ) : null}
+                            </>
+                          ) : null}
+
+                          <button
+                            onClick={() => void removeRow(row)}
+                            className="rounded-lg border border-red-300 px-3 py-1.5 text-red-700"
+                          >
+                            Slet
+                          </button>
+                        </div>
                       </td>
-                    ))}
-                    <td className="py-3 pr-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() =>
-                            setEditor(JSON.stringify(stripSystemFields(row), null, 2))
-                          }
-                          className="rounded-lg border border-slate-300 px-3 py-1.5"
-                        >
-                          Redigér
-                        </button>
-                        <button
-                          onClick={duplicateCurrent}
-                          className="rounded-lg border border-slate-300 px-3 py-1.5"
-                        >
-                          Duplicér
-                        </button>
-                        <button
-                          onClick={() => void removeRow(row)}
-                          className="rounded-lg border border-red-300 px-3 py-1.5 text-red-700"
-                        >
-                          Slet
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
