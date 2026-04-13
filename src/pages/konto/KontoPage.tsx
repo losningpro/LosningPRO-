@@ -845,7 +845,8 @@ const [pageSize, setPageSize] = useState(10);
       }
 
       await load();
-      setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
+setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
+setNotice("Post gemt.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunne ikke gemme posten.");
     } finally {
