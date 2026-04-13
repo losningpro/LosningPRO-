@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -42,12 +42,16 @@ function getProductHref(product: ProductLike): string {
 }
 
 function getProductImage(product: ProductLike): string {
-  return String(
+  const candidate = String(
     product.image_url_text ??
       product.image_url ??
       product.image ??
-      "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1200&q=80",
-  );
+      "",
+  ).trim();
+
+  if (candidate) return candidate;
+
+  return "/placeholder-product.jpg";
 }
 
 function getProductPrice(product: ProductLike): string {
@@ -78,8 +82,6 @@ export default function ProductSlider({
   const dragMovedRef = useRef(false);
   const startXRef = useRef(0);
   const startScrollLeftRef = useRef(0);
-  const frameRef = useRef<number | null>(null);
-  const velocityRef = useRef(0);
 
   const visibleProducts = useMemo(() => {
     return products.filter((product) => {
@@ -89,70 +91,14 @@ export default function ProductSlider({
     });
   }, [products]);
 
-  useEffect(() => {
-    return () => {
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, []);
-
-  function stepAutoScroll() {
+  function handleScrollBy(direction: -1 | 1) {
     const container = scrollRef.current;
     if (!container) return;
 
-    if (Math.abs(velocityRef.current) < 0.1) {
-      velocityRef.current = 0;
-      frameRef.current = null;
-      return;
-    }
-
-    container.scrollLeft += velocityRef.current;
-    frameRef.current = window.requestAnimationFrame(stepAutoScroll);
-  }
-
-  function startAnimation() {
-    if (frameRef.current !== null) return;
-    frameRef.current = window.requestAnimationFrame(stepAutoScroll);
-  }
-
-  function stopAnimation() {
-    velocityRef.current = 0;
-    if (frameRef.current !== null) {
-      window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-  }
-
-  function handleMouseMoveAuto(event: React.MouseEvent<HTMLDivElement>) {
-    const container = scrollRef.current;
-    if (!container || isDraggingRef.current) return;
-
-    const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const ratio = x / rect.width;
-    const centerOffset = ratio - 0.5;
-
-    const deadZone = 0.12;
-    if (Math.abs(centerOffset) < deadZone) {
-      velocityRef.current = 0;
-      stopAnimation();
-      return;
-    }
-
-    const directionStrength = Math.max(
-      0,
-      (Math.abs(centerOffset) - deadZone) / (0.5 - deadZone),
-    );
-    const maxSpeed = 10;
-    velocityRef.current = Math.sign(centerOffset) * directionStrength * maxSpeed;
-    startAnimation();
-  }
-
-  function handleMouseLeave() {
-    if (!isDraggingRef.current) {
-      stopAnimation();
-    }
+    container.scrollBy({
+      left: direction * Math.min(420, container.clientWidth * 0.9),
+      behavior: "smooth",
+    });
   }
 
   function handleMouseDown(event: React.MouseEvent<HTMLDivElement>) {
@@ -163,10 +109,9 @@ export default function ProductSlider({
     dragMovedRef.current = false;
     startXRef.current = event.clientX;
     startScrollLeftRef.current = container.scrollLeft;
-    stopAnimation();
   }
 
-  function handleMouseMoveDrag(event: React.MouseEvent<HTMLDivElement>) {
+  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     const container = scrollRef.current;
     if (!container || !isDraggingRef.current) return;
 
@@ -182,16 +127,6 @@ export default function ProductSlider({
     window.setTimeout(() => {
       isDraggingRef.current = false;
     }, 0);
-  }
-
-  function handleScrollBy(direction: -1 | 1) {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    container.scrollBy({
-      left: direction * Math.min(420, container.clientWidth * 0.9),
-      behavior: "smooth",
-    });
   }
 
   return (
@@ -240,19 +175,13 @@ export default function ProductSlider({
             Ingen produkter at vise endnu.
           </div>
         ) : (
-          <div
-            className="relative"
-            onMouseLeave={handleMouseLeave}
-          >
+          <div className="relative">
             <div
               ref={scrollRef}
-              onMouseMove={(event) => {
-                handleMouseMoveAuto(event);
-                handleMouseMoveDrag(event);
-              }}
               onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
-              onMouseCancel={handleMouseUp}
+              onMouseLeave={handleMouseUp}
               className="flex gap-5 overflow-x-auto scroll-smooth pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={{ cursor: isDraggingRef.current ? "grabbing" : "grab" }}
             >
@@ -283,6 +212,11 @@ export default function ProductSlider({
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                         loading="lazy"
                         draggable={false}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.onerror = null;
+                          target.src = "/placeholder-product.jpg";
+                        }}
                       />
                     </div>
 
@@ -296,7 +230,10 @@ export default function ProductSlider({
                       </h3>
 
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                        {String(product.description ?? "Åbn produktet for at se flere detaljer og fortsætte til booking eller køb.")}
+                        {String(
+                          product.description ??
+                            "Åbn produktet for at se flere detaljer og fortsætte til booking eller køb.",
+                        )}
                       </p>
 
                       <div className="mt-5 flex items-center justify-between gap-3">
