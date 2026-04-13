@@ -918,6 +918,7 @@ setNotice("Post slettet.");
     }
 
     await load();
+setNotice(row[field] ? "Post deaktiveret." : "Post aktiveret.");
   }
 
   function resetEditor() {
