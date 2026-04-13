@@ -55,7 +55,6 @@ export default function Home() {
       <main>
         <HeroSection />
         <BlueFeatureBar />
-        <HomeBusinessSection compact />
 
         <ProductSlider
           title="Populære Materialer"
@@ -70,6 +69,8 @@ export default function Home() {
         />
 
         <HowItWorks />
+
+        <HomeBusinessSection compact />
       </main>
 
       <Footer />
