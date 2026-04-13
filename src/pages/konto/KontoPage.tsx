@@ -386,6 +386,30 @@ function sortRows(rows: GenericRow[]): GenericRow[] {
     return aId.localeCompare(bId);
   });
 }
+const SYSTEM_FIELDS = new Set([
+  "created_at",
+  "updated_at",
+  "deleted_at",
+]);
+
+function stripSystemFields(row: GenericRow): GenericRow {
+  return Object.fromEntries(
+    Object.entries(row).filter(([key]) => !SYSTEM_FIELDS.has(key)),
+  );
+}
+
+function validatePayload(payload: GenericRow): string | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return "JSON skal være et objekt.";
+  }
+
+  const keys = Object.keys(payload);
+  if (keys.length === 0) {
+    return "JSON må ikke være tomt.";
+  }
+
+  return null;
+}
 
 function DashboardShell({
   children,
