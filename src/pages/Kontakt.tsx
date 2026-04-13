@@ -2,6 +2,25 @@ import React from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ContactForm from "../components/ContactForm";
+import { supabase } from "../lib/supabase";
+
+async function trackCallClick() {
+  try {
+    await supabase.from("contact_events").insert({
+      tenant_id: null,
+      lead_id: null,
+      channel: "call",
+      page_key: "kontakt",
+      metadata: {
+        source: "call_click",
+        href: typeof window !== "undefined" ? window.location.href : null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      },
+    });
+  } catch (error) {
+    console.error("trackCallClick error:", error);
+  }
+}
 
 export default function KontaktPage() {
   return (
@@ -17,6 +36,18 @@ export default function KontaktPage() {
             <p className="mx-auto mt-6 max-w-3xl text-lg text-white/90 md:text-xl">
               Fortæl os om din opgave, så opretter vi din henvendelse og kontakter dig hurtigst muligt.
             </p>
+
+            <div className="mt-8">
+              <a
+                href="tel:+4552717810"
+                onClick={() => {
+                  void trackCallClick();
+                }}
+                className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-4 text-sm font-medium text-[#2f4ba3] transition hover:bg-slate-100"
+              >
+                Ring nu: +45 52 71 78 10
+              </a>
+            </div>
           </div>
         </section>
 
