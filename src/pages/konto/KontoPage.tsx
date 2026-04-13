@@ -15,13 +15,13 @@ import {
   LogOut,
 } from "lucide-react";
 
-import { supabase } from "../lib/supabase";
-import { useProfile } from "../hooks/useProfile";
-import { useSession } from "../hooks/useSession";
+import { supabase } from "../../lib/supabase";
+import { useProfile } from "../../hooks/useProfile";
+import { useSession } from "../../hooks/useSession";
 import {
   normalizeDashboardRole,
   type DashboardRole,
-} from "../modules/access-control";
+} from "../../modules/access-control";
 
 type ModuleKey =
   | "oversigt"
@@ -797,11 +797,11 @@ export default function Konto() {
   const { session, loading: sessionLoading } = useSession();
   const { profile, loading: profileLoading } = useProfile();
 
-  const role: DashboardRole = normalizeDashboardRole({
+  const normalizedRole = normalizeDashboardRole({
     email: session?.user?.email ?? profile?.email ?? null,
     role: profile?.role ?? null,
     is_platform_admin: profile?.is_platform_admin ?? null,
-  }) as DashboardRole;
+  });
 
   const email = session?.user?.email ?? profile?.email ?? "";
 
@@ -818,6 +818,31 @@ export default function Konto() {
     return <Navigate to="/log-pa" replace />;
   }
 
+  if (normalizedRole === "guest") {
+    return (
+      <div className="p-6">
+        <SectionCard
+          title="Ingen gyldig dashboard-rolle"
+          description="Din bruger er logget ind, men profilen matcher ikke en gyldig rolle i public.user."
+        >
+          <div className="space-y-4 text-sm text-slate-700">
+            <p>
+              Kontrollér at tabellen <code>user</code> indeholder korrekt email, rolle og eventuelt
+              <code> auth_user_id</code> for denne konto.
+            </p>
+            <button
+              onClick={() => void onLogout()}
+              className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white"
+            >
+              Log ud
+            </button>
+          </div>
+        </SectionCard>
+      </div>
+    );
+  }
+
+  const role: DashboardRole = normalizedRole;
   const visibleModules = MODULES.filter((m) => m.roles.includes(role));
 
   return (
