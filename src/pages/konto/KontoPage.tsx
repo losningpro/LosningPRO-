@@ -971,11 +971,11 @@ setNotice(`Status opdateret til ${status}.`);
   return (
     <div className="space-y-6">
       <SectionCard title={title} description={description}>
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
+           {notice ? (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {notice}
+        </div>
+          ) : null}
 
         <div className="flex flex-wrap gap-3">
           <button
