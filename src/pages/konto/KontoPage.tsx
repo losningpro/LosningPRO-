@@ -485,7 +485,9 @@ function isBadgeColumn(column: string): boolean {
     column === "status" ||
     column === "role" ||
     column === "entry_type" ||
-    column === "payment_status"
+    column === "payment_status" ||
+    column === "source" ||
+    column === "priority"
   );
 }
 const LONG_TEXT_FIELDS = new Set([
