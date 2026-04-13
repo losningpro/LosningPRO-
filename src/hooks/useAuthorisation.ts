@@ -12,7 +12,7 @@ export function useAuthorization() {
   const { profile, loading } = useProfile();
 
   const normalizedRole = normalizeRoleFromProfile(profile);
-  const tenantId = profile?.tenant_id ?? null;
+  const tenantId = profile?.tenant_id ?? profile?.tenant_id_uuid ?? null;
   const isPlatformAdmin = profile?.is_platform_admin ?? false;
 
   return useMemo(() => {
