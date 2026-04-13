@@ -1,65 +1,76 @@
 import React from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ContactForm from "../components/ContactForm";
-import { supabase } from "../lib/supabase";
+import HeroSection from "../components/HeroSection";
+import BlueFeatureBar from "../components/BlueFeatureBar";
+import ProductSlider from "../components/ProductSlider";
+import HowItWorks from "../components/HowItWorks";
+import HomeBusinessSection from "../components/HomeBusinessSection";
+import { useMarketStore } from "../lib/store";
 
-async function trackCallClick() {
-  try {
-    await supabase.from("contact_events").insert({
-      tenant_id: null,
-      lead_id: null,
-      channel: "call",
-      page_key: "kontakt",
-      metadata: {
-        source: "call_click",
-        href: typeof window !== "undefined" ? window.location.href : null,
-        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-      },
-    });
-  } catch (error) {
-    console.error("trackCallClick error:", error);
-  }
+function SeoSchema() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "LøsningPRO",
+    url: "https://www.losningpro.dk",
+    telephone: "+45 52 71 78 10",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Baneleddet 39",
+      postalCode: "2600",
+      addressLocality: "Glostrup",
+      addressCountry: "DK",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
 }
 
-export default function KontaktPage() {
+export default function Home() {
+  const products = useMarketStore((state) => state.products);
+
+  const popularMaterials = products.filter(
+    (p) => p.category === "Material" && p.popular,
+  );
+
+  const popularServices = products.filter(
+    (p) =>
+      (p.category === "El-Service" ||
+        p.category === "VVS-Service" ||
+        p.category === "Tømrer") &&
+      p.popular,
+  );
+
   return (
     <div className="min-h-screen bg-white">
+      <SeoSchema />
       <Header />
 
       <main>
-        <section className="bg-[#2f4ba3] py-20 text-white md:py-24">
-          <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
-              Kontakt
-            </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg text-white/90 md:text-xl">
-              Fortæl os om din opgave, så opretter vi din henvendelse og kontakter dig hurtigst muligt.
-            </p>
+        <HeroSection />
+        <BlueFeatureBar />
 
-            <div className="mt-8">
-              <a
-                href="tel:+4552717810"
-                onClick={() => {
-                  void trackCallClick();
-                }}
-                className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-4 text-sm font-medium text-[#2f4ba3] transition hover:bg-slate-100"
-              >
-                Ring nu: +45 52 71 78 10
-              </a>
-            </div>
-          </div>
-        </section>
+        <ProductSlider
+          title="Populære Materialer"
+          products={popularMaterials}
+          viewAllLink="/kob"
+        />
 
-        <section id="kontaktformular" className="bg-gray-50 py-16 md:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ContactForm
-              pageKey="kontakt"
-              title="Fortæl os om din opgave"
-              description="Vi opretter din henvendelse som lead og kontakter dig hurtigst muligt."
-            />
-          </div>
-        </section>
+        <ProductSlider
+          title="Populære Tjenester"
+          products={popularServices}
+          viewAllLink="/tjenester"
+        />
+
+        <HowItWorks />
+
+        <HomeBusinessSection compact />
       </main>
 
       <Footer />
