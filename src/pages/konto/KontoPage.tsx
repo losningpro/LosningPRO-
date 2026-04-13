@@ -713,16 +713,23 @@ function GenericTableModule({
 
     try {
       const payload = normalizePayload(JSON.parse(editor)) as GenericRow;
+      const validationError = validatePayload(payload);
+
+      if (validationError) {
+        throw new Error(validationError);
+      }
 
       if (payload?.id) {
+        const updatePayload = stripSystemFields(payload);
         const { error } = await supabase
           .from(table)
-          .update(payload)
+          .update(updatePayload)
           .eq("id", payload.id as string);
 
         if (error) throw error;
       } else {
-        const { error } = await supabase.from(table).insert(payload);
+        const insertPayload = stripSystemFields(payload);
+        const { error } = await supabase.from(table).insert(insertPayload);
         if (error) throw error;
       }
 
@@ -758,6 +765,23 @@ function GenericTableModule({
     await load();
   }
 
+  function resetEditor() {
+    setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
+    setError(null);
+  }
+
+  function duplicateCurrent() {
+    try {
+      const payload = normalizePayload(JSON.parse(editor)) as GenericRow;
+      const cloned = { ...stripSystemFields(payload) };
+      delete cloned.id;
+      setEditor(JSON.stringify(cloned, null, 2));
+      setError(null);
+    } catch {
+      setError("Kunne ikke duplikere, fordi JSON ikke er gyldig.");
+    }
+  }
+
   const filteredRows = useMemo(() => {
     return rows.filter((row) => rowMatchesQuery(row, query));
   }, [rows, query]);
@@ -783,7 +807,7 @@ function GenericTableModule({
             Opdater
           </button>
           <button
-            onClick={() => setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2))}
+            onClick={resetEditor}
             className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
           >
             Ny post
@@ -846,10 +870,18 @@ function GenericTableModule({
                     <td className="py-3 pr-4">
                       <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => setEditor(JSON.stringify(row, null, 2))}
+                          onClick={() =>
+                            setEditor(JSON.stringify(stripSystemFields(row), null, 2))
+                          }
                           className="rounded-lg border border-slate-300 px-3 py-1.5"
                         >
                           Redigér
+                        </button>
+                        <button
+                          onClick={duplicateCurrent}
+                          className="rounded-lg border border-slate-300 px-3 py-1.5"
+                        >
+                          Duplicér
                         </button>
                         <button
                           onClick={() => void removeRow(row)}
@@ -876,13 +908,27 @@ function GenericTableModule({
           value={editor}
           onChange={(e) => setEditor(e.target.value)}
         />
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-3">
           <button
             onClick={() => void save()}
             disabled={saving}
             className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm text-white disabled:opacity-60"
           >
             {saving ? "Gemmer..." : "Gem post"}
+          </button>
+          <button
+            onClick={resetEditor}
+            type="button"
+            className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm"
+          >
+            Reset
+          </button>
+          <button
+            onClick={duplicateCurrent}
+            type="button"
+            className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm"
+          >
+            Duplicér aktuel
           </button>
         </div>
       </SectionCard>
