@@ -868,6 +868,18 @@ function GenericTableModule({
     }
   }
 
+  function updateEditorField(key: string, value: unknown) {
+    const parsed = safeParseEditor(editor);
+    if (!parsed) {
+      setError("JSON-editoren er ugyldig. Ret JSON før felteditoren kan bruges.");
+      return;
+    }
+
+    const next = { ...parsed, [key]: value };
+    setEditor(stringifyEditorObject(next));
+    setError(null);
+  }
+
   const filteredRows = useMemo(() => {
     return rows.filter((row) => rowMatchesQuery(row, query));
   }, [rows, query]);
@@ -881,6 +893,9 @@ function GenericTableModule({
   const columns = useMemo(() => {
     return getVisibleColumns(filteredRows.length ? filteredRows : rows);
   }, [filteredRows, rows]);
+
+  const parsedEditor = useMemo(() => safeParseEditor(editor), [editor]);
+  const editorKeys = useMemo(() => Object.keys(parsedEditor ?? {}), [parsedEditor]);
 
   return (
     <div className="space-y-6">
@@ -1037,6 +1052,98 @@ function GenericTableModule({
       </SectionCard>
 
       <SectionCard
+        title="Felteditor"
+        description="Hurtig redigering af det aktuelle JSON-objekt."
+      >
+        {!parsedEditor ? (
+          <div className="text-sm text-red-700">
+            JSON er ugyldig. Ret JSON-editoren for at bruge felteditoren.
+          </div>
+        ) : editorKeys.length === 0 ? (
+          <div className="text-sm text-slate-500">
+            Ingen felter endnu. Brug “Ny post” eller redigér JSON direkte.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {editorKeys.map((key) => {
+              const value = parsedEditor[key];
+
+              if (typeof value === "boolean") {
+                return (
+                  <label key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
+                    <input
+                      type="checkbox"
+                      checked={value}
+                      onChange={(e) => updateEditorField(key, e.target.checked)}
+                    />
+                    <span className="text-sm font-medium text-slate-700">{key}</span>
+                  </label>
+                );
+              }
+
+              if (typeof value === "number") {
+                return (
+                  <label key={key} className="block">
+                    <div className="mb-1 text-sm font-medium text-slate-700">{key}</div>
+                    <input
+                      type="number"
+                      value={String(value)}
+                      onChange={(e) => updateEditorField(key, e.target.value === "" ? null : Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm"
+                    />
+                  </label>
+                );
+              }
+
+              if (LONG_TEXT_FIELDS.has(key)) {
+                return (
+                  <label key={key} className="block md:col-span-2">
+                    <div className="mb-1 text-sm font-medium text-slate-700">{key}</div>
+                    <textarea
+                      value={String(value ?? "")}
+                      onChange={(e) => updateEditorField(key, e.target.value)}
+                      className="min-h-[120px] w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+                    />
+                  </label>
+                );
+              }
+
+              if (isPlainObject(value) || Array.isArray(value)) {
+                return (
+                  <label key={key} className="block md:col-span-2">
+                    <div className="mb-1 text-sm font-medium text-slate-700">{key}</div>
+                    <textarea
+                      value={JSON.stringify(value, null, 2)}
+                      onChange={(e) => {
+                        try {
+                          updateEditorField(key, JSON.parse(e.target.value));
+                        } catch {
+                          setError(`Feltet "${key}" skal være gyldig JSON.`);
+                        }
+                      }}
+                      className="min-h-[120px] w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-sm"
+                    />
+                  </label>
+                );
+              }
+
+              return (
+                <label key={key} className="block">
+                  <div className="mb-1 text-sm font-medium text-slate-700">{key}</div>
+                  <input
+                    type="text"
+                    value={String(value ?? "")}
+                    onChange={(e) => updateEditorField(key, e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm"
+                  />
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
         title="JSON-editor"
         description="Bruges til hurtig oprettelse og redigering uden at bryde den eksisterende arkitektur."
       >
@@ -1072,7 +1179,6 @@ function GenericTableModule({
     </div>
   );
 }
-
 function AccessDenied() {
   return (
     <SectionCard title="Ingen adgang" description="Denne side er ikke synlig for din rolle.">
