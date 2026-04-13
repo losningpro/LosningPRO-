@@ -844,71 +844,6 @@ function RoleProtectedModule({
     return <SettingsPage email={email} role={role} onLogout={onLogout} />;
   }
 
-  const defaultTemplates: Record<string, Record<string, unknown>> = {
-    bookings: {
-      product_slug: "",
-      user_id: "",
-      assigned_to: null,
-      start_time: new Date().toISOString(),
-      end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      status: "pending",
-    },
-    orders: {
-      status: "pending",
-      notes: "",
-    },
-    products: {
-      name: "",
-      slug: "",
-      description: "",
-      price_dkk: 0,
-      is_active: true,
-      product_type: "service",
-    },
-    galleri: {
-      title: "",
-      description: "",
-      before_image_url: "",
-      after_image_url: "",
-      comment: "",
-      display_order: 0,
-      is_published: false,
-    },
-    user: {
-      email: "",
-      role: "kunde",
-      tenant_id_uuid: null,
-      is_platform_admin: false,
-      status: "active",
-    },
-    tenants: {
-      name: "",
-      company_name: "",
-      status: "active",
-      default_language: "da",
-    },
-    subscriptions_contracts: {
-      plan_name: "",
-      contract_type: "",
-      currency_code: "DKK",
-      notes: "",
-    },
-    finance_entries: {
-      title: "",
-      amount: 0,
-      entry_type: "expense",
-      currency_code: "DKK",
-      notes: "",
-    },
-    docs: {
-      file_name: "",
-      file_url: "",
-      file_type: "",
-      doc_type: "",
-      is_public: false,
-    },
-  };
-
   if (!module.table) {
     return (
       <SectionCard title={module.label} description={module.description}>
@@ -924,7 +859,7 @@ function RoleProtectedModule({
       title={module.label}
       description={module.description}
       table={module.table}
-      emptyTemplate={defaultTemplates[module.table] ?? {}}
+      emptyTemplate={DEFAULT_TEMPLATES[module.table] ?? {}}
     />
   );
 }
