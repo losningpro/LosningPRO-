@@ -410,6 +410,58 @@ function validatePayload(payload: GenericRow): string | null {
 
   return null;
 }
+function getBadgeClass(value: string): string {
+  const normalized = value.trim().toLowerCase();
+
+  if (
+    normalized === "active" ||
+    normalized === "confirmed" ||
+    normalized === "completed" ||
+    normalized === "paid" ||
+    normalized === "master"
+  ) {
+    return "bg-green-100 text-green-800 border-green-200";
+  }
+
+  if (
+    normalized === "pending" ||
+    normalized === "draft" ||
+    normalized === "tenant"
+  ) {
+    return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  }
+
+  if (
+    normalized === "cancelled" ||
+    normalized === "failed" ||
+    normalized === "inactive" ||
+    normalized === "expired"
+  ) {
+    return "bg-red-100 text-red-800 border-red-200";
+  }
+
+  if (
+    normalized === "medarbejder" ||
+    normalized === "samarbejder" ||
+    normalized === "partner" ||
+    normalized === "kunde" ||
+    normalized === "expense" ||
+    normalized === "income"
+  ) {
+    return "bg-blue-100 text-blue-800 border-blue-200";
+  }
+
+  return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function isBadgeColumn(column: string): boolean {
+  return (
+    column === "status" ||
+    column === "role" ||
+    column === "entry_type" ||
+    column === "payment_status"
+  );
+}
 
 function DashboardShell({
   children,
