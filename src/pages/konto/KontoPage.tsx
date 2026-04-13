@@ -462,6 +462,34 @@ function isBadgeColumn(column: string): boolean {
     column === "payment_status"
   );
 }
+const LONG_TEXT_FIELDS = new Set([
+  "description",
+  "notes",
+  "comment",
+  "coment",
+  "body",
+  "message",
+  "other_specifications",
+  "color_texture_material",
+  "certificates",
+]);
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function safeParseEditor(editor: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(editor) as unknown;
+    return isPlainObject(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function stringifyEditorObject(value: Record<string, unknown>): string {
+  return JSON.stringify(value, null, 2);
+}
 
 function DashboardShell({
   children,
