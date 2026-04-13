@@ -1906,14 +1906,17 @@ function RoleProtectedModule({
     return <OverviewPage role={role} />;
   }
 
-  if (module.key === "kalender") {
-    return <CalendarModule />;
-  }
+ if (module.key === "kalender") {
+  return <CalendarModule />;
+}
 
-  if (module.key === "settings") {
-    return <SettingsPage email={email} role={role} onLogout={onLogout} />;
-  }
+if (module.key === "leads") {
+  return <LeadsModule />;
+}
 
+if (module.key === "settings") {
+  return <SettingsPage email={email} role={role} onLogout={onLogout} />;
+}
   if (!module.table) {
     return (
       <SectionCard title={module.label} description={module.description}>
