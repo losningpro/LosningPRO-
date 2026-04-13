@@ -502,6 +502,7 @@ const LONG_TEXT_FIELDS = new Set([
 
 const SELECT_FIELD_OPTIONS: Record<string, string[]> = {
   status: [
+    "new",
     "pending",
     "active",
     "confirmed",
@@ -512,6 +513,11 @@ const SELECT_FIELD_OPTIONS: Record<string, string[]> = {
     "expired",
     "paid",
     "failed",
+    "contacted",
+    "qualified",
+    "booked",
+    "won",
+    "lost",
   ],
   role: [
     "master",
@@ -540,6 +546,19 @@ const SELECT_FIELD_OPTIONS: Record<string, string[]> = {
     "da",
     "en",
     "de",
+  ],
+  source: [
+    "form",
+    "call",
+    "chat_ai",
+    "checkout",
+    "manual",
+  ],
+  priority: [
+    "low",
+    "normal",
+    "high",
+    "urgent",
   ],
 };
 
