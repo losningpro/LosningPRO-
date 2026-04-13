@@ -876,6 +876,335 @@ function CalendarModule() {
   );
 }
 
+function LeadsModule() {
+  const [rows, setRows] = useState<LeadRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(250);
+
+    if (error) {
+      setRows([]);
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setRows((data ?? []) as LeadRow[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter((row) => {
+      const text = [
+        row.name,
+        row.lastname,
+        row.email,
+        row.phone_number,
+        row.city,
+        row.source,
+        row.status,
+        row.priority,
+        row.product,
+        row.coment,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return text.includes(q);
+    });
+  }, [rows, query]);
+
+  const selectedLead =
+    filteredRows.find((row) => row.id === selectedLeadId) ??
+    rows.find((row) => row.id === selectedLeadId) ??
+    null;
+
+  async function quickSetLeadStatus(id: string, status: string) {
+    const payload: Record<string, unknown> = { status };
+
+    if (status === "contacted") {
+      payload.contacted_at = new Date().toISOString();
+    }
+
+    const { error } = await supabase.from("leads").update(payload).eq("id", id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setNotice(`Lead opdateret til ${status}.`);
+    await load();
+  }
+
+  async function quickSetLeadPriority(id: string, priority: string) {
+    const { error } = await supabase.from("leads").update({ priority }).eq("id", id);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setNotice(`Prioritet sat til ${priority}.`);
+    await load();
+  }
+
+  function fullName(row: LeadRow): string {
+    return [row.name, row.lastname].filter(Boolean).join(" ").trim() || "Ukendt lead";
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionCard
+        title="Leads / kontakt"
+        description="Henvendelser fra kontaktformular, opkald og andre kanaler."
+      >
+        {error ? (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        {notice ? (
+          <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {notice}
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => void load()}
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
+          >
+            Opdater
+          </button>
+
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Søg efter navn, e-mail, telefon, status..."
+            className="min-w-[260px] rounded-xl border border-slate-300 px-4 py-2 text-sm"
+          />
+        </div>
+
+        <div className="mt-4 text-sm text-slate-500">
+          Viser {filteredRows.length} leads
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <div className="overflow-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-50">
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">Lead</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">Kilde</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">Status</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">Prioritet</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-700">Oprettet</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td className="px-4 py-4 text-slate-500" colSpan={5}>
+                        Indlæser...
+                      </td>
+                    </tr>
+                  ) : filteredRows.length === 0 ? (
+                    <tr>
+                      <td className="px-4 py-4 text-slate-500" colSpan={5}>
+                        Ingen leads fundet.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows.map((row) => (
+                      <tr
+                        key={row.id}
+                        onClick={() => setSelectedLeadId(row.id)}
+                        className={`cursor-pointer border-b border-slate-100 transition hover:bg-slate-50 ${
+                          selectedLeadId === row.id ? "bg-sky-50" : ""
+                        }`}
+                      >
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-slate-900">{fullName(row)}</div>
+                          <div className="mt-1 text-xs text-slate-500">{row.email || "Ingen e-mail"}</div>
+                          <div className="mt-1 text-xs text-slate-500">{row.phone_number || "Ingen telefon"}</div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getBadgeClass(String(row.source ?? ""))}`}>
+                            {row.source || "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getBadgeClass(String(row.status ?? ""))}`}>
+                            {row.status || "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getBadgeClass(String(row.priority ?? ""))}`}>
+                            {row.priority || "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          {row.created_at ? new Date(row.created_at).toLocaleString() : "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <SectionCard
+            title={selectedLead ? fullName(selectedLead) : "Lead-detaljer"}
+            description={
+              selectedLead
+                ? "Se detaljer og brug hurtige handlinger."
+                : "Vælg et lead fra listen for at se detaljer."
+            }
+          >
+            {!selectedLead ? (
+              <div className="text-sm text-slate-500">
+                Ingen lead valgt endnu.
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-500">E-mail</div>
+                    <div className="mt-1 text-sm text-slate-900">{selectedLead.email || "-"}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-500">Telefon</div>
+                    <div className="mt-1 text-sm text-slate-900">{selectedLead.phone_number || "-"}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-500">By</div>
+                    <div className="mt-1 text-sm text-slate-900">{selectedLead.city || "-"}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-slate-500">Emne / produkt</div>
+                    <div className="mt-1 text-sm text-slate-900">{selectedLead.product || "-"}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-slate-500">Besked</div>
+                  <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm whitespace-pre-wrap text-slate-800">
+                    {selectedLead.coment || "Ingen besked"}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => void quickSetLeadStatus(selectedLead.id, "contacted")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    → contacted
+                  </button>
+                  <button
+                    onClick={() => void quickSetLeadStatus(selectedLead.id, "qualified")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    → qualified
+                  </button>
+                  <button
+                    onClick={() => void quickSetLeadStatus(selectedLead.id, "won")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    → won
+                  </button>
+                  <button
+                    onClick={() => void quickSetLeadStatus(selectedLead.id, "lost")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    → lost
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => void quickSetLeadPriority(selectedLead.id, "normal")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    normal
+                  </button>
+                  <button
+                    onClick={() => void quickSetLeadPriority(selectedLead.id, "high")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    high
+                  </button>
+                  <button
+                    onClick={() => void quickSetLeadPriority(selectedLead.id, "urgent")}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    urgent
+                  </button>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <div>
+                    <span className="font-medium">Kilde:</span> {selectedLead.source || "-"}
+                  </div>
+                  <div className="mt-1">
+                    <span className="font-medium">Oprettet:</span>{" "}
+                    {selectedLead.created_at
+                      ? new Date(selectedLead.created_at).toLocaleString()
+                      : "-"}
+                  </div>
+                  <div className="mt-1">
+                    <span className="font-medium">Kontaktet:</span>{" "}
+                    {selectedLead.contacted_at
+                      ? new Date(selectedLead.contacted_at).toLocaleString()
+                      : "-"}
+                  </div>
+                  <div className="mt-1">
+                    <span className="font-medium">Samtykke:</span>{" "}
+                    {selectedLead.consent_accepted ? "Ja" : "Nej"}
+                  </div>
+                </div>
+              </div>
+            )}
+          </SectionCard>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
 function GenericTableModule({
   title,
   description,
