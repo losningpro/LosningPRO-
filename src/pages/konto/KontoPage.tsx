@@ -645,6 +645,7 @@ function GenericTableModule({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<string>("{}");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
@@ -669,7 +670,7 @@ function GenericTableModule({
       return;
     }
 
-    setRows((data ?? []) as GenericRow[]);
+    setRows(sortRows((data ?? []) as GenericRow[]));
     setLoading(false);
   }
 
@@ -733,12 +734,13 @@ function GenericTableModule({
     await load();
   }
 
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => rowMatchesQuery(row, query));
+  }, [rows, query]);
+
   const columns = useMemo(() => {
-    if (!rows.length) return [] as string[];
-    const set = new Set<string>();
-    rows.forEach((row) => Object.keys(row).forEach((key) => set.add(key)));
-    return Array.from(set).slice(0, 8);
-  }, [rows]);
+    return getVisibleColumns(filteredRows.length ? filteredRows : rows);
+  }, [filteredRows, rows]);
 
   return (
     <div className="space-y-6">
@@ -762,6 +764,17 @@ function GenericTableModule({
           >
             Ny post
           </button>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Søg i tabellen..."
+            className="min-w-[240px] rounded-xl border border-slate-300 px-4 py-2 text-sm"
+          />
+        </div>
+
+        <div className="mt-2 text-sm text-slate-500">
+          Viser {filteredRows.length} af {rows.length} rækker
         </div>
 
         <div className="mt-5 overflow-auto">
@@ -785,14 +798,14 @@ function GenericTableModule({
                     Indlæser...
                   </td>
                 </tr>
-              ) : rows.length === 0 ? (
+              ) : filteredRows.length === 0 ? (
                 <tr>
                   <td className="py-4 text-slate-500" colSpan={columns.length + 1}>
-                    Ingen data endnu i tabellen {table}.
+                    Ingen data matcher søgningen i tabellen {table}.
                   </td>
                 </tr>
               ) : (
-                rows.map((row, idx) => (
+                filteredRows.map((row, idx) => (
                   <tr
                     key={(row.id as string | undefined) ?? idx}
                     className="border-b border-slate-100 align-top"
