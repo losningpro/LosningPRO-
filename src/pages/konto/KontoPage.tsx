@@ -1338,6 +1338,35 @@ setNotice(`Status opdateret til ${status}.`);
                           >
                             Slet
                           </button>
+
+                          {table === "leads" ? (
+  <>
+    <button
+      onClick={() => void quickSetStatus(row, "contacted")}
+      className="rounded-lg border border-slate-300 px-3 py-1.5"
+    >
+      → contacted
+    </button>
+    <button
+      onClick={() => void quickSetStatus(row, "qualified")}
+      className="rounded-lg border border-slate-300 px-3 py-1.5"
+    >
+      → qualified
+    </button>
+    <button
+      onClick={() => void quickSetStatus(row, "won")}
+      className="rounded-lg border border-slate-300 px-3 py-1.5"
+    >
+      → won
+    </button>
+    <button
+      onClick={() => void quickSetStatus(row, "lost")}
+      className="rounded-lg border border-slate-300 px-3 py-1.5"
+    >
+      → lost
+    </button>
+  </>
+) : null}
                         </div>
                       </td>
                     </tr>
