@@ -1263,6 +1263,8 @@ setNotice(`Status opdateret til ${status}.`);
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {editorKeys.map((key) => {
+            const value = parsedEditor[key];
             const selectOptions = getSelectOptionsForField(key);
 
               if (selectOptions) {
