@@ -759,13 +759,14 @@ function GenericTableModule({
   emptyTemplate?: Record<string, unknown>;
 }) {
   const [rows, setRows] = useState<GenericRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [editor, setEditor] = useState<string>("{}");
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+const [loading, setLoading] = useState(true);
+const [saving, setSaving] = useState(false);
+const [error, setError] = useState<string | null>(null);
+const [notice, setNotice] = useState<string | null>(null);
+const [editor, setEditor] = useState<string>("{}");
+const [query, setQuery] = useState("");
+const [page, setPage] = useState(1);
+const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
