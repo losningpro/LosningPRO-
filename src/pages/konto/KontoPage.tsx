@@ -604,7 +604,7 @@ function GenericTableModule({
     setError(null);
 
     try {
-      const payload = JSON.parse(editor) as GenericRow;
+      const payload = normalizePayload(JSON.parse(editor)) as GenericRow;
 
       if (payload?.id) {
         const { error } = await supabase
