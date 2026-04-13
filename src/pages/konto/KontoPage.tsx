@@ -444,7 +444,8 @@ function getBadgeClass(value: string): string {
     normalized === "confirmed" ||
     normalized === "completed" ||
     normalized === "paid" ||
-    normalized === "master"
+    normalized === "master" ||
+    normalized === "won"
   ) {
     return "bg-green-100 text-green-800 border-green-200";
   }
@@ -452,7 +453,9 @@ function getBadgeClass(value: string): string {
   if (
     normalized === "pending" ||
     normalized === "draft" ||
-    normalized === "tenant"
+    normalized === "tenant" ||
+    normalized === "new" ||
+    normalized === "normal"
   ) {
     return "bg-yellow-100 text-yellow-800 border-yellow-200";
   }
@@ -461,7 +464,8 @@ function getBadgeClass(value: string): string {
     normalized === "cancelled" ||
     normalized === "failed" ||
     normalized === "inactive" ||
-    normalized === "expired"
+    normalized === "expired" ||
+    normalized === "lost"
   ) {
     return "bg-red-100 text-red-800 border-red-200";
   }
@@ -472,7 +476,17 @@ function getBadgeClass(value: string): string {
     normalized === "partner" ||
     normalized === "kunde" ||
     normalized === "expense" ||
-    normalized === "income"
+    normalized === "income" ||
+    normalized === "form" ||
+    normalized === "call" ||
+    normalized === "chat_ai" ||
+    normalized === "checkout" ||
+    normalized === "manual" ||
+    normalized === "qualified" ||
+    normalized === "contacted" ||
+    normalized === "booked" ||
+    normalized === "high" ||
+    normalized === "urgent"
   ) {
     return "bg-blue-100 text-blue-800 border-blue-200";
   }
