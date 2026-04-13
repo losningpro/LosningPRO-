@@ -303,6 +303,89 @@ const MODULES: ModuleConfig[] = [
     description: "Profil, session og systemindstillinger.",
   },
 ];
+const HIDDEN_COLUMNS = new Set([
+  "created_at",
+  "updated_at",
+  "deleted_at",
+  "password",
+]);
+
+function getVisibleColumns(rows: GenericRow[]): string[] {
+  if (!rows.length) return [];
+
+  const set = new Set<string>();
+  rows.forEach((row) => {
+    Object.keys(row).forEach((key) => {
+      if (!HIDDEN_COLUMNS.has(key)) {
+        set.add(key);
+      }
+    });
+  });
+
+  const preferredOrder = [
+    "id",
+    "email",
+    "name",
+    "title",
+    "slug",
+    "role",
+    "status",
+    "tenant_id",
+    "tenant_id_uuid",
+    "amount",
+    "price_dkk",
+  ];
+
+  const cols = Array.from(set);
+
+  cols.sort((a, b) => {
+    const ia = preferredOrder.indexOf(a);
+    const ib = preferredOrder.indexOf(b);
+
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+
+    return a.localeCompare(b);
+  });
+
+  return cols.slice(0, 10);
+}
+
+function rowMatchesQuery(row: GenericRow, query: string): boolean {
+  if (!query.trim()) return true;
+
+  const q = query.trim().toLowerCase();
+
+  return Object.entries(row).some(([key, value]) => {
+    if (HIDDEN_COLUMNS.has(key)) return false;
+    return String(
+      typeof value === "object" ? JSON.stringify(value) : value ?? "",
+    )
+      .toLowerCase()
+      .includes(q);
+  });
+}
+
+function sortRows(rows: GenericRow[]): GenericRow[] {
+  return [...rows].sort((a, b) => {
+    const aUpdated = String(a.updated_at ?? "");
+    const bUpdated = String(b.updated_at ?? "");
+    if (aUpdated && bUpdated && aUpdated !== bUpdated) {
+      return bUpdated.localeCompare(aUpdated);
+    }
+
+    const aCreated = String(a.created_at ?? "");
+    const bCreated = String(b.created_at ?? "");
+    if (aCreated && bCreated && aCreated !== bCreated) {
+      return bCreated.localeCompare(aCreated);
+    }
+
+    const aId = String(a.id ?? "");
+    const bId = String(b.id ?? "");
+    return aId.localeCompare(bId);
+  });
+}
 
 function DashboardShell({
   children,
