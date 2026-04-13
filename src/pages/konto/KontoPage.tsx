@@ -26,6 +26,7 @@ import {
 type ModuleKey =
   | "oversigt"
   | "kalender"
+  | "leads"
   | "orders"
   | "products"
   | "lager"
@@ -150,6 +151,22 @@ const DEFAULT_TEMPLATES: Record<string, Record<string, unknown>> = {
     doc_type: "",
     is_public: false,
   },
+  leads: {
+    slug: "",
+    tenant_id: null,
+    source: "form",
+    status: "new",
+    priority: "normal",
+    name: "",
+    lastname: "",
+    email: "",
+    phone_number: "",
+    city: "",
+    coment: "",
+    product: "",
+    assigned_to: null,
+    consent_accepted: false,
+  },
 };
 
 function normalizePrimitive(value: unknown): unknown {
@@ -212,6 +229,15 @@ const MODULES: ModuleConfig[] = [
     icon: <CalendarDays className="h-4 w-4" />,
     roles: ALL_ROLES,
     description: "Bookinger, tider og status.",
+  },
+  {
+  key: "leads",
+  label: "Leads / kontakt",
+  path: "leads",
+  table: "leads",
+  icon: <ClipboardList className="h-4 w-4" />,
+  roles: ["master", "tenant"],
+  description: "Leads fra kontaktformular, opkald og andre kanaler.",
   },
   {
     key: "orders",
