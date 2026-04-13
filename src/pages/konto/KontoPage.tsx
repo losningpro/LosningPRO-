@@ -722,6 +722,8 @@ function GenericTableModule({
   const [error, setError] = useState<string | null>(null);
   const [editor, setEditor] = useState<string>("{}");
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     setEditor(JSON.stringify(emptyTemplate ?? {}, null, 2));
@@ -737,7 +739,7 @@ function GenericTableModule({
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.from(table).select("*").limit(100);
+    const { data, error } = await supabase.from(table).select("*").limit(250);
 
     if (error) {
       setRows([]);
@@ -753,6 +755,10 @@ function GenericTableModule({
   useEffect(() => {
     void load();
   }, [table]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, pageSize, table]);
 
   async function save() {
     if (!table) {
@@ -838,6 +844,12 @@ function GenericTableModule({
     return rows.filter((row) => rowMatchesQuery(row, query));
   }, [rows, query]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedRows = filteredRows.slice(startIndex, endIndex);
+
   const columns = useMemo(() => {
     return getVisibleColumns(filteredRows.length ? filteredRows : rows);
   }, [filteredRows, rows]);
@@ -871,10 +883,45 @@ function GenericTableModule({
             placeholder="Søg i tabellen..."
             className="min-w-[240px] rounded-xl border border-slate-300 px-4 py-2 text-sm"
           />
+          <select
+            value={String(pageSize)}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm"
+          >
+            <option value="10">10 rækker</option>
+            <option value="25">25 rækker</option>
+            <option value="50">50 rækker</option>
+            <option value="100">100 rækker</option>
+          </select>
         </div>
 
-        <div className="mt-2 text-sm text-slate-500">
-          Viser {filteredRows.length} af {rows.length} rækker
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+          <div>
+            Viser {paginatedRows.length} af {filteredRows.length} rækker
+            {filteredRows.length !== rows.length ? ` (filtreret fra ${rows.length})` : ""}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
+            >
+              Forrige
+            </button>
+            <span>
+              Side {safePage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-50"
+            >
+              Næste
+            </button>
+          </div>
         </div>
 
         <div className="mt-5 overflow-auto">
@@ -898,25 +945,35 @@ function GenericTableModule({
                     Indlæser...
                   </td>
                 </tr>
-              ) : filteredRows.length === 0 ? (
+              ) : paginatedRows.length === 0 ? (
                 <tr>
                   <td className="py-4 text-slate-500" colSpan={columns.length + 1}>
                     Ingen data matcher søgningen i tabellen {table}.
                   </td>
                 </tr>
               ) : (
-                filteredRows.map((row, idx) => (
+                paginatedRows.map((row, idx) => (
                   <tr
                     key={(row.id as string | undefined) ?? idx}
                     className="border-b border-slate-100 align-top"
                   >
                     {columns.map((col) => (
                       <td key={col} className="max-w-[220px] py-3 pr-4 text-slate-700">
-                        <div className="line-clamp-3 break-words">
-                          {typeof row[col] === "object"
-                            ? JSON.stringify(row[col])
-                            : String(row[col] ?? "")}
-                        </div>
+                        {isBadgeColumn(col) ? (
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getBadgeClass(
+                              String(row[col] ?? ""),
+                            )}`}
+                          >
+                            {String(row[col] ?? "") || "-"}
+                          </span>
+                        ) : (
+                          <div className="line-clamp-3 break-words">
+                            {typeof row[col] === "object"
+                              ? JSON.stringify(row[col])
+                              : String(row[col] ?? "")}
+                          </div>
+                        )}
                       </td>
                     ))}
                     <td className="py-3 pr-4">
@@ -981,43 +1038,6 @@ function GenericTableModule({
             className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm"
           >
             Duplicér aktuel
-          </button>
-        </div>
-      </SectionCard>
-    </div>
-  );
-}
-
-function SettingsPage({
-  email,
-  role,
-  onLogout,
-}: {
-  email: string;
-  role: DashboardRole;
-  onLogout: () => Promise<void>;
-}) {
-  return (
-    <div className="space-y-6">
-      <SectionCard
-        title="Andre indstillinger"
-        description="Brugeroplysninger og hurtige handlinger."
-      >
-        <div className="space-y-3 text-sm text-slate-700">
-          <div>
-            <span className="font-semibold">Email:</span> {email}
-          </div>
-          <div>
-            <span className="font-semibold">Rolle:</span> {role}
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <button
-            onClick={() => void onLogout()}
-            className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white"
-          >
-            Log ud
           </button>
         </div>
       </SectionCard>
