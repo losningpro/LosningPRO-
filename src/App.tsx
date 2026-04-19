@@ -13,6 +13,7 @@ import { RequireAuth } from "./components/requireauth";
 import { CartProvider } from "./cart/cart.store";
 
 import Home from "./pages/Home";
+import HomeBusinessPage from "./pages/HomeBusiness";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/login";
@@ -41,7 +42,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
 function ProductRedirect() {
   const { productSlug } = useParams();
-  return <Navigate to={`/kob?q=${encodeURIComponent(productSlug ?? "")}`} replace />;
+  return (
+    <Navigate
+      to={`/kob?q=${encodeURIComponent(productSlug ?? "")}`}
+      replace
+    />
+  );
 }
 
 export default function App() {
@@ -51,6 +57,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Navigate to="/" replace />} />
+
+          <Route path="/homebusiness" element={<HomeBusinessPage />} />
+          <Route path="/home-business" element={<Navigate to="/homebusiness" replace />} />
+          <Route path="/erhverv" element={<Navigate to="/homebusiness" replace />} />
+
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/kob" element={<Kob />} />
@@ -95,6 +106,7 @@ export default function App() {
           <Route path="/arbejdsgalleri" element={<Arbejdsgalleri />} />
           <Route path="/info" element={<Info />} />
           <Route path="/juridisk" element={<JuridiskInfo />} />
+
           <Route
             path="*"
             element={
