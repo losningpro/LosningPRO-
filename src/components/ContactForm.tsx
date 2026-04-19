@@ -105,7 +105,7 @@ export default function ContactForm({
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function insertLeadAndEvent() {
+  async function insertLead() {
     const normalizedEmail = normalizeEmail(form.email);
     const normalizedPhone = normalizePhone(form.phone);
     const names = splitName(form.name);
@@ -133,7 +133,7 @@ export default function ContactForm({
       product: form.subject.trim() || null,
     };
 
-    const { data: leadInsert, error: leadError } = await supabase
+    const { data, error: leadError } = await supabase
       .from("leads")
       .insert(leadPayload)
       .select("id, slug")
@@ -143,23 +143,27 @@ export default function ContactForm({
       throw leadError;
     }
 
-    const eventPayload = {
-      tenant_id: null,
-      lead_id: String(leadInsert.id),
-      channel: "form",
-      page_key: pageKey,
-      metadata: buildContactMetadata(pageKey, form),
-    };
+    return data;
+  }
 
-    const { error: eventError } = await supabase
-      .from("contact_events")
-      .insert(eventPayload);
+  async function insertContactEvent(leadId: string) {
+    try {
+      const eventPayload = {
+        tenant_id: null,
+        lead_id: String(leadId),
+        channel: "form",
+        page_key: pageKey,
+        metadata: buildContactMetadata(pageKey, form),
+      };
 
-    if (eventError) {
-      throw eventError;
+      const { error } = await supabase.from("contact_events").insert(eventPayload);
+
+      if (error) {
+        console.warn("contact_events insert skipped:", error.message);
+      }
+    } catch (err) {
+      console.warn("contact_events insert failed:", err);
     }
-
-    return leadInsert;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -175,8 +179,12 @@ export default function ContactForm({
     setSuccess(null);
 
     try {
-      await insertLeadAndEvent();
-      setSuccess("Tak. Din henvendelse er oprettet, og vi kontakter dig hurtigst muligt.");
+      const lead = await insertLead();
+      await insertContactEvent(String(lead.id));
+
+      setSuccess(
+        "Tak. Din henvendelse er sendt og gemt i systemet. Vi kontakter dig hurtigst muligt."
+      );
       setForm(INITIAL_STATE);
     } catch (err) {
       console.error("ContactForm submit error:", err);
@@ -192,10 +200,14 @@ export default function ContactForm({
         <div className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
           Kontaktformular
         </div>
+
         <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">
           {title}
         </h2>
-        <p className="mt-4 text-base text-slate-600 md:text-lg">{description}</p>
+
+        <p className="mt-4 text-base text-slate-600 md:text-lg">
+          {description}
+        </p>
       </div>
 
       {error ? (
@@ -302,7 +314,7 @@ export default function ContactForm({
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-4 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-2xl bg-[#2f4da3] px-6 py-4 text-sm font-medium text-white transition hover:bg-[#263f88] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Sender..." : "Send henvendelse"}
           </button>
