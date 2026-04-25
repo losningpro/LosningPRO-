@@ -1,19 +1,40 @@
 import React, { FormEvent, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 
 const DASHBOARD_PATH = "/konto";
 const RESET_PASSWORD_PATH = "/reset-password";
+const AUTH_CALLBACK_PATH = "/auth/callback";
 
 function getAppOrigin() {
   if (typeof window === "undefined") return "https://www.losningpro.dk";
   return window.location.origin;
 }
 
-function getRedirectTo(path: string) {
+function sanitizeRedirectPath(value: string | null) {
+  if (!value) return DASHBOARD_PATH;
+  if (!value.startsWith("/")) return DASHBOARD_PATH;
+  if (value.startsWith("//")) return DASHBOARD_PATH;
+  return value;
+}
+
+function getAbsoluteUrl(path: string) {
   return `${getAppOrigin()}${path}`;
 }
 
+function getOAuthCallbackUrl(nextPath: string) {
+  const url = new URL(getAbsoluteUrl(AUTH_CALLBACK_PATH));
+  url.searchParams.set("next", nextPath);
+  return url.toString();
+}
+
 export default function LoginPage() {
+  const [searchParams] = useSearchParams();
+  const redirectPath = useMemo(
+    () => sanitizeRedirectPath(searchParams.get("redirect")),
+    [searchParams],
+  );
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +67,7 @@ export default function LoginPage() {
 
       if (signInError) throw signInError;
 
-      window.location.assign(getRedirectTo(DASHBOARD_PATH));
+      window.location.assign(getAbsoluteUrl(redirectPath));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Log ind mislykkedes.");
     } finally {
@@ -60,12 +81,20 @@ export default function LoginPage() {
     setOauthLoading(provider);
 
     try {
-      const redirectTo = getRedirectTo(DASHBOARD_PATH);
+      const callbackUrl = getOAuthCallbackUrl(redirectPath);
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo,
+          redirectTo: callbackUrl,
+          scopes: provider === "facebook" ? "email,public_profile" : "email profile",
+          queryParams:
+            provider === "google"
+              ? {
+                  access_type: "offline",
+                  prompt: "select_account",
+                }
+              : undefined,
         },
       });
 
@@ -89,7 +118,7 @@ export default function LoginPage() {
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: getRedirectTo(RESET_PASSWORD_PATH),
+        redirectTo: getAbsoluteUrl(RESET_PASSWORD_PATH),
       });
 
       if (error) throw error;
