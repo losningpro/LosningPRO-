@@ -17,6 +17,7 @@ import HomeBusinessPage from "./pages/HomeBusiness";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/login";
+import AuthCallbackPage from "./pages/AuthCallback";
 import Konto from "./pages/konto";
 import OmOs from "./pages/OmOs";
 import Kontakt from "./pages/Kontakt";
@@ -77,6 +78,15 @@ export default function App() {
             }
           />
           <Route path="/log-pa" element={<Navigate to="/login" replace />} />
+
+          <Route
+            path="/auth/callback"
+            element={
+              <AppLayout>
+                <AuthCallbackPage />
+              </AppLayout>
+            }
+          />
 
           <Route
             path="/join"
