@@ -76,35 +76,32 @@ export default function LoginPage() {
   }
 
   async function handleOAuthLogin(provider: "google" | "facebook") {
-    setError(null);
-    setMessage(null);
-    setOauthLoading(provider);
+  setError(null);
+  setMessage(null);
+  setOauthLoading(provider);
 
-    try {
-      const callbackUrl = getOAuthCallbackUrl(redirectPath);
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/konto`,
+        scopes:
+          provider === "google"
+            ? "openid email profile"
+            : "email,public_profile",
+        queryParams:
+          provider === "google"
+            ? { prompt: "select_account" }
+            : undefined,
+      },
+    });
 
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: callbackUrl,
-          scopes: provider === "facebook" ? "email,public_profile" : "email profile",
-          queryParams:
-            provider === "google"
-              ? {
-                  access_type: "offline",
-                  prompt: "select_account",
-                }
-              : undefined,
-        },
-      });
-
-      if (oauthError) throw oauthError;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Social login mislykkedes.");
-      setOauthLoading(null);
-    }
+    if (error) throw error;
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Social login mislykkedes.");
+    setOauthLoading(null);
   }
-
+}
   async function handleResetPassword() {
     setError(null);
     setMessage(null);
