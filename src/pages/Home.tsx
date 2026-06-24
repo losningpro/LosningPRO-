@@ -18,7 +18,7 @@ function SeoSchema() {
     address: {
       "@type": "PostalAddress",
       streetAddress: "Baneleddet 39",
-      postalCode: "2600",
+      postalCxxxxxxxxxxxode: "2600",
       addressLocality: "Glostrup",
       addressCountry: "DK",
     },
