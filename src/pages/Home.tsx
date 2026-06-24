@@ -18,11 +18,11 @@ function SeoSchema() {
     address: {
       "@type": "PostalAddress",
       streetAddress: "Baneleddet 39",
-      postalCxxxxxxxxxxxode: "2600",
+      postalCode: "2600",
       addressLocality: "Glostrup",
       addressCountry: "DK",
     },
-  };
+  };+++++++++++++++++++++++
 
   return (
     <script
