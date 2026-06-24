@@ -22,7 +22,7 @@ function SeoSchema() {
       addressLocality: "Glostrup",
       addressCountry: "DK",
     },
-+++++++++++++++++++++++
+  );
 
   return (
     <script
